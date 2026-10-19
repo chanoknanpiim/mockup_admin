@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปลดปล่อย Admin | ระบบจัดการข้อมูลห้องน้ำ มธ. ท่าพระจันทร์</title>
+    <!-- โหลดฟอนต์ Noto Sans Thai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- โหลดไฟล์ CSS -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <!-- ==========================================
+         ส่วนที่ 1: หน้า Login (แสดงเป็นค่าเริ่มต้น)
+         ========================================== -->
+    <div id="login-view" class="view-container active">
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-logo">🚽 ปลดปล่อย Admin</div>
+                    <p class="login-subtitle">ระบบจัดการข้อมูลห้องน้ำ<br>มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์</p>
+                </div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email-input">อีเมลผู้ดูแลระบบ (Email)</label>
+                        <input type="email" id="email-input" class="form-control" placeholder="admin@tu.ac.th" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password-input">รหัสผ่าน (Password)</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password-input" class="form-control" placeholder="••••••••" required>
+                            <button type="button" id="toggle-password-btn" class="icon-btn">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="remember-me">
+                            <span>จดจำการเข้าสู่ระบบ</span>
+                        </label>
+                        <a href="#" class="forgot-link" onclick="alert('Demo: ฟีเจอร์ลืมรหัสผ่านยังไม่เปิดใช้งาน')">ลืมรหัสผ่าน?</a>
+                    </div>
+                    <div id="login-error" class="alert-error hidden">อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</div>
+                    <button type="submit" class="btn btn-primary btn-block" id="login-btn">เข้าสู่ระบบ</button>
+                </form>
+                <div class="login-footer">
+                    <p>Demo Login: อีเมล <b>admin@tu.ac.th</b> | รหัส <b>1234</b></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         ส่วนที่ 2: ระบบ Admin Dashboard (ซ่อนไว้จนกว่าจะ Login ผ่าน)
+         ========================================== -->
+    <div id="app-view" class="view-container hidden">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">🚽 ปลดปล่อย</div>
+                <button class="icon-btn mobile-close-btn" id="close-sidebar-btn">✕</button>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-target="page-dashboard">📊 Dashboard</button>
+                <button class="nav-item" data-target="page-toilets">🚻 จัดการห้องน้ำ</button>
+                <button class="nav-item" data-target="page-map">🗺️ แผนที่ห้องน้ำ</button>
+                <button class="nav-item" data-target="page-reports">⚠️ รายงานปัญหา <span class="badge" id="report-badge">2</span></button>
+                <button class="nav-item" data-target="page-reviews">⭐ รีวิวและคะแนน</button>
+                <button class="nav-item" data-target="page-facilities">🏢 อาคาร & สิ่งอำนวยความสะดวก</button>
+                
+                <div class="nav-divider"></div>
+                <div class="nav-title">ตั้งค่าระบบ</div>
+                <button class="nav-item" data-target="page-users">👥 ผู้ดูแลระบบ</button>
+                <button class="nav-item" data-target="page-logs">📝 ประวัติการดำเนินการ</button>
+                <button class="nav-item" data-target="page-settings">⚙️ ตั้งค่าระบบ</button>
+            </nav>
+        </aside>
+
+        <!-- พื้นที่เนื้อหาหลัก (Main Content) -->
+        <main class="main-content">
+            
+            <!-- Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="icon-btn hamburger-btn" id="open-sidebar-btn">☰</button>
+                    <h2 class="page-title" id="current-page-title">Dashboard</h2>
+                </div>
+                <div class="topbar-right">
+                    <span class="datetime-display" id="datetime-display">จ. 19 ต.ค. 2026 | 09:47</span>
+                    <div class="user-profile">
+                        <div class="avatar">A</div>
+                        <span class="user-name">Super Admin</span>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" id="logout-btn">ออกจากระบบ</button>
+                </div>
+            </header>
+
+            <!-- พื้นที่แสดงผลแต่ละหน้า (Pages) -->
+            <div class="page-container">
+                
+                <!-- 2.1 หน้า Dashboard -->
+                <div id="page-dashboard" class="page-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-title">ห้องน้ำทั้งหมด</div>
+                            <div class="stat-value" id="stat-total-toilets">0</div>
+                            <div class="stat-desc">จุดบริการในระบบ</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-title">ใช้งานได้ปกติ</div>
+                            <div class="stat-value" id="stat-normal-toilets">0</div>
+                            <div class="stat-desc">พร้อมให้บริการ</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-title">กำลังทำความสะอาด</div>
+                            <div class="stat-value" id="stat-cleaning-toilets">0</div>
+                            <div class="stat-desc">สถานะชั่วคราว</div>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-title">ชำรุด / ปิดซ่อม</div>
+                            <div class="stat-value" id="stat-broken-toilets">0</div>
+                            <div class="stat-desc">รอการแก้ไข</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-panels">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>📊 สัดส่วนสถานะห้องน้ำ (Demo Graph)</h3>
+                            </div>
+                            <div class="panel-body flex-center">
+                                <!-- กราฟจำลองด้วย CSS -->
+                                <div class="mock-chart-container">
+                                    <div class="mock-pie-chart"></div>
+                                    <div class="chart-legend">
+                                        <div><span class="dot dot-success"></span> ปกติ (80%)</div>
+                                        <div><span class="dot dot-warning"></span> ทำความสะอาด (15%)</div>
+                                        <div><span class="dot dot-danger"></span> ชำรุด (5%)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>⚠️ รายงานปัญหารอตรวจสอบล่าสุด</h3>
+                                <button class="btn btn-sm btn-outline-primary" onclick="app.switchPage('page-reports')">ดูทั้งหมด</button>
+                            </div>
+                            <div class="panel-body table-responsive">
+                                <table class="table" id="dashboard-reports-table">
+                                    <thead>
+                                        <tr>
+                                            <th>รหัสรายงาน</th>
+                                            <th>ห้องน้ำ</th>
+                                            <th>ปัญหา</th>
+                                            <th>สถานะ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- โค้ด JS จะมาแทรกตรงนี้ -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.2 หน้า จัดการห้องน้ำ -->
+                <div id="page-toilets" class="page-section hidden">
+                    <div class="action-bar">
+                        <div class="search-filter-group">
+                            <input type="text" class="form-control" id="search-toilet" placeholder="ค้นหาชื่อห้องน้ำ, อาคาร...">
+                            <select class="form-control" id="filter-building-toilet">
+                                <option value="">ทุกอาคาร</option>
+                                <option value="คณะศิลปศาสตร์">คณะศิลปศาสตร์</option>
+                                <option value="คณะนิติศาสตร์">คณะนิติศาสตร์</option>
+                            </select>
+                            <select class="form-control" id="filter-status-toilet">
+                                <option value="">ทุกสถานะ</option>
+                                <option value="ปกติ">✅ ปกติ</option>
+                                <option value="ทำความสะอาด">🧹 ทำความสะอาด</option>
+                                <option value="ชำรุด">🚫 ชำรุด</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" id="add-toilet-btn">+ เพิ่มห้องน้ำ</button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="table-responsive">
+                            <table class="table" id="toilets-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัส</th>
+                                        <th>อาคาร - ชั้น</th>
+                                        <th>สิ่งอำนวยความสะดวก</th>
+                                        <th>คะแนน</th>
+                                        <th>สถานะ</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- โค้ด JS จะมาแทรกตรงนี้ -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- จำลอง Pagination -->
+                        <div class="pagination">
+                            <button class="btn btn-sm btn-outline" disabled>ก่อนหน้า</button>
+                            <button class="btn btn-sm btn-primary">1</button>
+                            <button class="btn btn-sm btn-outline">ถัดไป</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.3 หน้า แผนที่ (Demo) -->
+                <div id="page-map" class="page-section hidden">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>🗺️ ตำแหน่งห้องน้ำ (Map Placeholder)</h3>
+                            <p class="text-muted text-sm">หมายเหตุ: หน้านี้เป็นการจำลอง (Placeholder) ต้องเชื่อมต่อ Google Maps API หรือ Leaflet.js ในระบบจริง</p>
+                        </div>
+                        <div class="map-placeholder">
+                            <div class="map-mockup-bg">
+                                <div class="map-pin" style="top: 30%; left: 40%;" title="คณะศิลปศาสตร์">📍</div>
+                                <div class="map-pin warning" style="top: 50%; left: 60%;" title="คณะนิติศาสตร์">📍</div>
+                                <div class="map-center-text">แผนที่มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.4 หน้า รายงานปัญหา -->
+                <div id="page-reports" class="page-section hidden">
+                    <div class="action-bar">
+                        <div class="search-filter-group">
+                            <select class="form-control" id="filter-status-report">
+                                <option value="">สถานะการจัดการทั้งหมด</option>
+                                <option value="รอตรวจสอบ">รอตรวจสอบ</option>
+                                <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                                <option value="ปิดงานแล้ว">ปิดงานแล้ว</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="table-responsive">
+                            <table class="table" id="reports-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสรายงาน</th>
+                                        <th>วันที่แจ้ง</th>
+                                        <th>ห้องน้ำที่เกิดปัญหา</th>
+                                        <th>ประเภทปัญหา</th>
+                                        <th>สถานะ</th>
+                                        <th>จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- โค้ด JS จะมาแทรกตรงนี้ -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.5 หน้า รีวิวและคะแนน -->
+                <div id="page-reviews" class="page-section hidden">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>⭐ รีวิวความสะอาดล่าสุด</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="reviews-table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสรีวิว</th>
+                                        <th>วันที่</th>
+                                        <th>ห้องน้ำ</th>
+                                        <th>คะแนน</th>
+                                        <th>ข้อความรีวิว</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- โค้ด JS จะมาแทรกตรงนี้ -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2.6 - 2.9 หน้าอื่นๆ (ทำเป็น Placeholder เพื่อความสมบูรณ์ของเมนู) -->
+                <div id="page-facilities" class="page-section hidden">
+                    <div class="panel"><div class="panel-body text-center"><h4>กำลังพัฒนา (Demo Placeholder)</h4><p>พื้นที่สำหรับจัดการรายชื่ออาคารและเพิ่มอาคารใหม่</p></div></div>
+                </div>
+                <div id="page-users" class="page-section hidden">
+                    <div class="panel"><div class="panel-body text-center"><h4>กำลังพัฒนา (Demo Placeholder)</h4><p>พื้นที่สำหรับเพิ่ม/ลด สิทธิ์ Super Admin, Admin, Reviewer</p></div></div>
+                </div>
+                <div id="page-logs" class="page-section hidden">
+                    <div class="panel"><div class="panel-body text-center"><h4>กำลังพัฒนา (Demo Placeholder)</h4><p>Audit Logs บันทึกประวัติว่าใครแก้ไขข้อมูลใดไปเมื่อไหร่</p></div></div>
+                </div>
+                <div id="page-settings" class="page-section hidden">
+                    <div class="panel">
+                        <div class="panel-header"><h3>⚙️ สถานะการเชื่อมต่อระบบ (System Status)</h3></div>
+                        <div class="panel-body">
+                            <ul class="settings-list">
+                                <li><b>สถานะ Backend API:</b> <span class="badge warning">Demo Mode (Local Storage)</span></li>
+                                <li><b>สถานะฐานข้อมูล:</b> <span class="badge warning">Not Connected</span></li>
+                                <li><b>LINE OA Integration:</b> <span class="badge warning">Not Connected</span></li>
+                                <li><b>LINE LIFF Integration:</b> <span class="badge warning">Not Connected</span></li>
+                            </ul>
+                            <p class="text-muted mt-2">ห้ามใส่ Channel Secret หรือ Access Token ไว้ในหน้านี้หากไม่มีระบบป้องกันการเข้าถึงจาก Backend</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         ส่วนที่ 3: Modals (หน้าต่างป๊อปอัป)
+         ========================================== -->
+    
+    <!-- Modal: จัดการฟอร์มห้องน้ำ (เพิ่ม/แก้ไข) -->
+    <div id="toilet-modal" class="modal-overlay hidden">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="toilet-modal-title">เพิ่มข้อมูลห้องน้ำ</h3>
+                <button class="icon-btn close-modal-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="toilet-form">
+                    <input type="hidden" id="form-toilet-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>อาคาร <span class="text-danger">*</span></label>
+                            <select id="form-building" class="form-control" required>
+                                <option value="">เลือกอาคาร</option>
+                                <option value="คณะศิลปศาสตร์">คณะศิลปศาสตร์</option>
+                                <option value="คณะนิติศาสตร์">คณะนิติศาสตร์</option>
+                                <option value="คณะพาณิชยศาสตร์และการบัญชี">คณะพาณิชยศาสตร์และการบัญชี</option>
+                                <option value="หอสมุดปรีดี พนมยงค์">หอสมุดปรีดี พนมยงค์</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>ชั้น <span class="text-danger">*</span></label>
+                            <input type="text" id="form-floor" class="form-control" placeholder="เช่น ชั้น 1, ชั้น G" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>รายละเอียดตำแหน่ง / พิกัดละติจูด-ลองจิจูด</label>
+                        <input type="text" id="form-location-detail" class="form-control" placeholder="เช่น ใกล้ลิฟต์ฝั่งเหนือ หรือ 13.7563, 100.4902">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>ประเภทห้องน้ำ</label>
+                            <select id="form-type" class="form-control">
+                                <option value="แยกเพศชาย/หญิง">แยกเพศชาย/หญิง</option>
+                                <option value="ห้องน้ำรวม (All Gender)">ห้องน้ำรวม (All Gender)</option>
+                                <option value="เฉพาะชาย">เฉพาะชาย</option>
+                                <option value="เฉพาะหญิง">เฉพาะหญิง</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>สถานะปัจจุบัน</label>
+                            <select id="form-status" class="form-control">
+                                <option value="ปกติ">ใช้งานได้ปกติ</option>
+                                <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
+                                <option value="ชำรุด">ชำรุด / ปิดซ่อม</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>สิ่งอำนวยความสะดวก</label>
+                        <div class="checkbox-group mt-1">
+                            <label class="checkbox-container"><input type="checkbox" id="form-has-bidet"> <span>💦 มีสายฉีดชำระ</span></label>
+                            <label class="checkbox-container"><input type="checkbox" id="form-has-accessible"> <span>♿️ รองรับผู้พิการ</span></label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
+                <button class="btn btn-primary" id="save-toilet-btn">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: จัดการรายงานปัญหา -->
+    <div id="report-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>รายละเอียดรายงาน <span id="report-modal-id" class="text-muted text-sm"></span></h3>
+                <button class="icon-btn close-modal-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="report-detail-group">
+                    <p class="text-muted text-sm">สถานที่</p>
+                    <h4 id="report-modal-location">คณะศิลปศาสตร์ - ชั้น 1</h4>
+                </div>
+                <div class="report-detail-group mt-2">
+                    <p class="text-muted text-sm">ปัญหาที่พบ</p>
+                    <h4 id="report-modal-issue" class="text-danger">สายฉีดชำระน้ำรั่ว</h4>
+                    <p id="report-modal-desc" class="mt-1">น้ำไหลนองเต็มพื้นเลยครับ เข้าใช้งานลำบากมาก</p>
+                </div>
+                <div class="form-group mt-2">
+                    <label>อัปเดตสถานะการจัดการ (ของรายงาน)</label>
+                    <select id="report-modal-status" class="form-control">
+                        <option value="รอตรวจสอบ">รอตรวจสอบ</option>
+                        <option value="กำลังดำเนินการ">กำลังดำเนินการ (เช่น แจ้งแม่บ้าน/ช่างแล้ว)</option>
+                        <option value="ปิดงานแล้ว">ปิดงานแล้ว (แก้ไขเสร็จสิ้น)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline close-modal-btn">ปิด</button>
+                <button class="btn btn-primary" id="save-report-btn">อัปเดตสถานะ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (แจ้งเตือนมุมขวาบน) -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- โหลดไฟล์ JavaScript -->
+    <script src="admin.js"></script>
+</body>
+</html>
