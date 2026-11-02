@@ -61,44 +61,44 @@
         <!-- แถบเมนูด้านซ้าย (Sidebar) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-brand">🚽 ปลดปล่อย Admin</div>
+                <div class="sidebar-brand">PlodPloi_Admin</div>
                 <button class="icon-btn mobile-close-btn" id="close-sidebar-btn">✕</button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-title">ภาพรวมและการแจ้งเตือน</div>
                 <button class="nav-item active" data-target="page-dashboard">
-                    <span>📊 ภาพรวมระบบ</span>
+                    <span>ภาพรวมระบบ</span>
                 </button>
                 <button class="nav-item" data-target="page-reports">
-                    <span>⚠️ รายงานแจ้งซ่อม/ปัญหา</span>
+                    <span>รายงานแจ้งซ่อม/ปัญหา</span>
                     <span class="badge" id="report-badge">0</span>
                 </button>
                 <button class="nav-item" data-target="page-reviews">
-                    <span>⭐ รีวิวและคะแนนความสะอาด</span>
+                    <span>รีวิวและคะแนนความสะอาด</span>
                 </button>
 
                 <div class="nav-divider"></div>
                 <div class="nav-title">จัดการฐานข้อมูลหลัก (CRUD)</div>
                 <button class="nav-item" data-target="page-toilets">
-                    <span>🚻 1. ข้อมูลห้องน้ำ (Toilets)</span>
+                    <span>ข้อมูลห้องน้ำ (Toilets)</span>
                 </button>
                 <button class="nav-item" data-target="page-buildings">
-                    <span>🏢 2. ข้อมูลอาคาร (Buildings)</span>
+                    <span>ข้อมูลอาคาร (Buildings)</span>
                 </button>
                 <button class="nav-item" data-target="page-locations">
-                    <span>📍 3. จุดอ้างอิงในตึก (Locations)</span>
+                    <span>จุดอ้างอิงในตึก (Locations)</span>
                 </button>
                 <button class="nav-item" data-target="page-amenities">
-                    <span>✨ 4. สิ่งอำนวยความสะดวก (Amenities)</span>
+                    <span>สิ่งอำนวยความสะดวก (Amenities)</span>
                 </button>
                 
                 <div class="nav-divider"></div>
                 <div class="nav-title">ระบบและผู้ใช้งาน</div>
                 <button class="nav-item" data-target="page-users">
-                    <span>👥 รายชื่อผู้ใช้งานและแอดมิน</span>
+                    <span>รายชื่อผู้ใช้งานและแอดมิน</span>
                 </button>
                 <button class="nav-item" data-target="page-settings">
-                    <span>🔌 ตั้งค่าเชื่อมต่อ Supabase</span>
+                    <span>ตั้งค่าเชื่อมต่อ Supabase</span>
                 </button>
             </nav>
         </aside>
@@ -113,8 +113,8 @@
                     <h2 class="page-title" id="current-page-title">ภาพรวมระบบ</h2>
                 </div>
                 <div class="topbar-right">
-                    <span id="db-connection-badge" class="badge warning">⚡ โหมดข้อมูลในเครื่อง (พร้อมเชื่อม DB)</span>
-                    <button class="btn btn-outline btn-sm" id="sync-data-btn" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล">🔄 โหลดข้อมูลใหม่</button>
+                    <span id="db-connection-badge" class="badge warning">โหมดข้อมูลในเครื่อง (พร้อมเชื่อม DB)</span>
+                    <button class="btn btn-outline btn-sm" id="sync-data-btn" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล">โหลดข้อมูลใหม่</button>
                     <div class="user-profile">
                         <div class="avatar">A</div>
                         <span class="user-name">ผู้ดูแลระบบ</span>
@@ -130,7 +130,7 @@
                 <div id="page-dashboard" class="page-section active">
                     <div class="helper-banner">
                         <div>
-                            <strong>👋 ยินดีต้อนรับสู่ระบบจัดการ "ปลดปล่อย"</strong>
+                            <strong>ยินดีต้อนรับสู่ระบบจัดการ "ปลดปล่อย"</strong>
                             <p>คุณสามารถดูสรุปสถานะห้องน้ำทั้งหมดในมหาวิทยาลัย และกดที่เมนูด้านซ้ายเพื่อเพิ่ม ลบ หรือแก้ไขข้อมูลอาคารและห้องน้ำได้ทันที</p>
                         </div>
                         <button class="btn btn-primary" onclick="app.switchPage('page-toilets')">+ ไปหน้าเพิ่ม/แก้ไขห้องน้ำ</button>
@@ -143,17 +143,17 @@
                             <div class="stat-desc">จุดบริการที่ลงทะเบียนแล้ว</div>
                         </div>
                         <div class="stat-card success">
-                            <div class="stat-title">✅ ใช้งานได้ปกติ</div>
+                            <div class="stat-title">ใช้งานได้ปกติ</div>
                             <div class="stat-value" id="stat-normal-toilets">0</div>
                             <div class="stat-desc">พร้อมให้นักศึกษาและบุคลากรใช้งาน</div>
                         </div>
                         <div class="stat-card warning">
-                            <div class="stat-title">🧹 กำลังทำความสะอาด</div>
+                            <div class="stat-title">กำลังทำความสะอาด</div>
                             <div class="stat-value" id="stat-cleaning-toilets">0</div>
                             <div class="stat-desc">งดใช้ชั่วคราว</div>
                         </div>
                         <div class="stat-card danger">
-                            <div class="stat-title">🚫 ชำรุด / ปิดซ่อม</div>
+                            <div class="stat-title">ชำรุด / ปิดซ่อม</div>
                             <div class="stat-value" id="stat-broken-toilets">0</div>
                             <div class="stat-desc">ต้องได้รับการซ่อมแซม</div>
                         </div>
@@ -162,7 +162,7 @@
                     <div class="dashboard-panels">
                         <div class="panel">
                             <div class="panel-header">
-                                <h3>📊 สัดส่วนความพร้อมใช้งานของห้องน้ำ</h3>
+                                <h3>สัดส่วนความพร้อมใช้งานของห้องน้ำ</h3>
                             </div>
                             <div class="panel-body flex-center">
                                 <div class="chart-container">
@@ -178,7 +178,7 @@
 
                         <div class="panel">
                             <div class="panel-header">
-                                <h3>⚠️ รายการแจ้งปัญหาล่าสุดจากผู้ใช้งาน</h3>
+                                <h3>รายการแจ้งปัญหาล่าสุดจากผู้ใช้งาน</h3>
                                 <button class="btn btn-sm btn-outline-primary" onclick="app.switchPage('page-reports')">จัดการปัญหาทั้งหมด →</button>
                             </div>
                             <div class="panel-body table-responsive">
@@ -203,7 +203,7 @@
                 <div id="page-toilets" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>🚻 การจัดการข้อมูลห้องน้ำ (ตาราง toilets และ toilet_amenities)</strong>
+                            <strong>การจัดการข้อมูลห้องน้ำ (ตาราง toilets และ toilet_amenities)</strong>
                             <p>ใช้สำหรับเพิ่มจุดห้องน้ำใหม่ เปลี่ยนสถานะ (ปกติ/ทำความสะอาด/ชำรุด) และติ๊กเลือกสิ่งอำนวยความสะดวกที่มีในห้องน้ำนั้นๆ</p>
                         </div>
                         <button class="btn btn-primary btn-lg" id="add-toilet-btn">+ เพิ่มห้องน้ำจุดใหม่</button>
@@ -211,15 +211,15 @@
 
                     <div class="action-bar">
                         <div class="search-filter-group">
-                            <input type="text" class="form-control" id="search-toilet" placeholder="🔍 พิมพ์ค้นหาชื่ออาคาร หรือจุดสังเกต...">
+                            <input type="text" class="form-control" id="search-toilet" placeholder="พิมพ์ค้นหาชื่ออาคาร หรือจุดสังเกต...">
                             <select class="form-control" id="filter-building-toilet">
-                                <option value="">🏢 แสดงทุกอาคาร</option>
+                                <option value="">แสดงทุกอาคาร</option>
                             </select>
                             <select class="form-control" id="filter-status-toilet">
-                                <option value="">📌 แสดงทุกสถานะ</option>
-                                <option value="ปกติ">✅ ใช้งานได้ปกติ</option>
-                                <option value="ทำความสะอาด">🧹 กำลังทำความสะอาด</option>
-                                <option value="ชำรุด">🚫 ชำรุด / ปิดซ่อม</option>
+                                <option value="">แสดงทุกสถานะ</option>
+                                <option value="ปกติ">ใช้งานได้ปกติ</option>
+                                <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
+                                <option value="ชำรุด">ชำรุด / ปิดซ่อม</option>
                             </select>
                         </div>
                     </div>
@@ -276,7 +276,7 @@
                 <div id="page-locations" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>📍 การจัดการจุดอ้างอิง/ห้องสำคัญในอาคาร (ตาราง locations)</strong>
+                            <strong>การจัดการจุดอ้างอิง/ห้องสำคัญในอาคาร (ตาราง locations)</strong>
                             <p>ใช้ระบุห้องเรียน ห้องสมุด หรือจุดสำคัญในแต่ละชั้น เพื่อช่วยให้ผู้ใช้งานเทียบตำแหน่งเดินไปห้องน้ำได้ง่ายขึ้น</p>
                         </div>
                         <button class="btn btn-primary btn-lg" id="add-location-btn">+ เพิ่มจุดอ้างอิงใหม่</button>
@@ -305,7 +305,7 @@
                 <div id="page-amenities" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>✨ การจัดการสิ่งอำนวยความสะดวก (ตาราง amenities)</strong>
+                            <strong>การจัดการสิ่งอำนวยความสะดวก (ตาราง amenities)</strong>
                             <p>จัดการตัวเลือกสิ่งอำนวยความสะดวก เช่น สายฉีดชำระ ห้องน้ำผู้พิการ กระดาษทิชชู่ เพื่อให้ผู้ใช้กดกรองค้นหาในแอปได้</p>
                         </div>
                         <button class="btn btn-primary btn-lg" id="add-amenity-btn">+ เพิ่มสิ่งอำนวยความสะดวก</button>
@@ -332,20 +332,20 @@
                 <div id="page-reports" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>⚠️ รายการแจ้งปัญหาห้องน้ำชำรุด / อัปโหลดรูปภาพ (ตาราง reports)</strong>
+                            <strong>รายการแจ้งปัญหาห้องน้ำชำรุด / อัปโหลดรูปภาพ (ตาราง reports)</strong>
                             <p>ตรวจสอบรายการที่ผู้ใช้แจ้งเข้ามาพร้อมรูปถ่าย หรือกดปุ่มด้านขวาเพื่อบันทึกแจ้งปัญหาใหม่พร้อมแนบรูปภาพประกอบ</p>
                         </div>
-                        <button class="btn btn-primary btn-lg" id="add-report-btn">📸 + แจ้งปัญหาใหม่ (พร้อมแนบรูป)</button>
+                        <button class="btn btn-primary btn-lg" id="add-report-btn">แจ้งปัญหาใหม่ (พร้อมแนบรูป)</button>
                     </div>
 
                     <div class="action-bar">
                         <div class="search-filter-group">
                             <select class="form-control" id="filter-type-report">
-                                <option value="">🔍 แสดงทุกประเภทปัญหา</option>
-                                <option value="น้ำไม่ไหล">💧 น้ำไม่ไหล</option>
-                                <option value="ประตูปิดซ่อม">🚪 ประตูปิดซ่อม / ชำรุด</option>
-                                <option value="ปิดทำความสะอาด">🧹 ปิดทำความสะอาด</option>
-                                <option value="อื่นๆ">📌 อื่นๆ (เช่น ทิชชู่หมด, พื้นเปียก)</option>
+                                <option value="">แสดงทุกประเภทปัญหา</option>
+                                <option value="น้ำไม่ไหล">น้ำไม่ไหล</option>
+                                <option value="ประตูปิดซ่อม">ประตูปิดซ่อม / ชำรุด</option>
+                                <option value="ปิดทำความสะอาด">ปิดทำความสะอาด</option>
+                                <option value="อื่นๆ">อื่นๆ (เช่น ทิชชู่หมด, พื้นเปียก)</option>
                             </select>
                         </div>
                     </div>
@@ -374,7 +374,7 @@
                 <div id="page-reviews" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>⭐ ความคิดเห็นและคะแนนความสะอาด (ตาราง reviews)</strong>
+                            <strong>ความคิดเห็นและคะแนนความสะอาด (ตาราง reviews)</strong>
                             <p>รวบรวมคะแนนรีวิว (1-5 ดาว) จากนักศึกษาและบุคลากรหลังเข้าใช้งานจริง</p>
                         </div>
                     </div>
@@ -402,7 +402,7 @@
                 <div id="page-users" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>👥 รายชื่อผู้ใช้งานและผู้ดูแลระบบ (ตาราง Users และ admin)</strong>
+                            <strong>รายชื่อผู้ใช้งานและผู้ดูแลระบบ (ตาราง Users และ admin)</strong>
                             <p>จัดการข้อมูลผู้ใช้งานในระบบและกำหนดสิทธิ์ผู้ดูแลระบบ</p>
                         </div>
                         <button class="btn btn-primary" id="add-user-btn">+ เพิ่มผู้ใช้งานใหม่</button>
@@ -430,14 +430,14 @@
                 <div id="page-settings" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>🔌 ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase จริง</strong>
+                            <strong>ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase จริง</strong>
                             <p>นำ Project URL และ Publishable Key จากหน้าเว็บ Supabase ของคุณมาวางด้านล่าง เพื่อให้เว็บนี้ดึงและบันทึกข้อมูลลงตารางจริงทันที</p>
                         </div>
                     </div>
 
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>🔑 ข้อมูลกุญแจเชื่อมต่อ (Supabase Credentials)</h3>
+                            <h3>ข้อมูลกุญแจเชื่อมต่อ (Supabase Credentials)</h3>
                         </div>
                         <div class="panel-body">
                             <div class="form-group">
@@ -456,7 +456,7 @@
                                 <small class="text-muted">หากยังไม่ได้สร้าง Bucket ใน Supabase ระบบจะแปลงรูปภาพเก็บลงตารางให้โดยอัตโนมัติ (ใช้งานได้ทันทีไม่ต้องตั้งค่าเพิ่ม)</small>
                             </div>
                             <div style="display: flex; gap: 12px; margin-top: 20px;">
-                                <button class="btn btn-primary btn-lg" id="save-settings-btn">💾 บันทึกและเชื่อมต่อฐานข้อมูลทันที</button>
+                                <button class="btn btn-primary btn-lg" id="save-settings-btn">บันทึกและเชื่อมต่อฐานข้อมูลทันที</button>
                                 <button class="btn btn-outline-danger" id="clear-settings-btn">ล้างค่าการเชื่อมต่อ</button>
                             </div>
                         </div>
@@ -520,9 +520,9 @@
                         <div class="form-group half">
                             <label>สถานะความพร้อมใช้งาน</label>
                             <select id="form-toilet-status" class="form-control">
-                                <option value="ปกติ">✅ ใช้งานได้ปกติ</option>
-                                <option value="ทำความสะอาด">🧹 กำลังทำความสะอาด</option>
-                                <option value="ชำรุด">🚫 ชำรุด / ปิดซ่อม</option>
+                                <option value="ปกติ">ใช้งานได้ปกติ</option>
+                                <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
+                                <option value="ชำรุด">ชำรุด / ปิดซ่อม</option>
                             </select>
                         </div>
                     </div>
@@ -537,7 +537,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary btn-lg" id="save-toilet-btn">💾 บันทึกข้อมูลห้องน้ำ</button>
+                <button class="btn btn-primary btn-lg" id="save-toilet-btn">บันทึกข้อมูลห้องน้ำ</button>
             </div>
         </div>
     </div>
@@ -564,7 +564,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary" id="save-building-btn">💾 บันทึกอาคาร</button>
+                <button class="btn btn-primary" id="save-building-btn">บันทึกอาคาร</button>
             </div>
         </div>
     </div>
@@ -599,7 +599,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary" id="save-location-btn">💾 บันทึกจุดอ้างอิง</button>
+                <button class="btn btn-primary" id="save-location-btn">บันทึกจุดอ้างอิง</button>
             </div>
         </div>
     </div>
@@ -619,14 +619,14 @@
                         <input type="text" id="form-amenity-name" class="form-control" placeholder="เช่น สายฉีดชำระ, กระดาษทิชชู่, ห้องน้ำผู้พิการ" required>
                     </div>
                     <div class="form-group">
-                        <label>ไอคอนสัญลักษณ์ (ใส่อีโมจิ หรือ ลิงก์รูปไอคอน)</label>
-                        <input type="text" id="form-amenity-icon" class="form-control" placeholder="เช่น 💦, ♿️, 🧻, 🧴" value="✨">
+                        <label>ไอคอนสัญลักษณ์ (ใส่ข้อความ)</label>
+                        <input type="text" id="form-amenity-icon" class="form-control" placeholder="เช่น สายฉีดชำระ, ห้องน้ำผู้พิการ, กระดาษทิชชู่, สบู่ล้างมือ">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary" id="save-amenity-btn">💾 บันทึกข้อมูล</button>
+                <button class="btn btn-primary" id="save-amenity-btn">บันทึกข้อมูล</button>
             </div>
         </div>
     </div>
@@ -635,7 +635,7 @@
     <div id="new-report-modal" class="modal-overlay hidden">
         <div class="modal-content modal-lg">
             <div class="modal-header">
-                <h3>📸 แจ้งปัญหาห้องน้ำ / อัปโหลดรูปภาพประกอบ</h3>
+                <h3>แจ้งปัญหาห้องน้ำ / อัปโหลดรูปภาพประกอบ</h3>
                 <button class="icon-btn close-modal-btn">✕</button>
             </div>
             <div class="modal-body">
@@ -648,10 +648,10 @@
                         <div class="form-group half">
                             <label>ประเภทปัญหาที่พบ <span class="text-danger">*</span></label>
                             <select id="form-report-type" class="form-control" required>
-                                <option value="น้ำไม่ไหล">💧 น้ำไม่ไหล</option>
-                                <option value="ประตูปิดซ่อม">🚪 ประตูปิดซ่อม / อุปกรณ์ชำรุด</option>
-                                <option value="ปิดทำความสะอาด">🧹 ปิดทำความสะอาด</option>
-                                <option value="อื่นๆ">📌 อื่นๆ (เช่น ทิชชู่หมด, พื้นเปียก)</option>
+                                <option value="น้ำไม่ไหล">น้ำไม่ไหล</option>
+                                <option value="ประตูปิดซ่อม">ประตูปิดซ่อม / อุปกรณ์ชำรุด</option>
+                                <option value="ปิดทำความสะอาด">ปิดทำความสะอาด</option>
+                                <option value="อื่นๆ">อื่นๆ (เช่น ทิชชู่หมด, พื้นเปียก)</option>
                             </select>
                         </div>
                     </div>
@@ -662,11 +662,11 @@
                     </div>
 
                     <div class="form-group">
-                        <label>📸 แนบรูปถ่ายจุดที่เกิดปัญหา (กดเลือกรูปจากมือถือหรือคอมพิวเตอร์)</label>
+                        <label>แนบรูปถ่ายจุดที่เกิดปัญหา (กดเลือกรูปจากมือถือหรือคอมพิวเตอร์)</label>
                         <div class="upload-box" id="upload-box-area">
                             <input type="file" id="form-report-photo" accept="image/*" class="file-input">
                             <div id="upload-placeholder">
-                                <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+                                <div style="font-size: 32px; margin-bottom: 8px;"></div>
                                 <strong>คลิกที่นี่เพื่อเลือกรูปภาพ หรือถ่ายภาพ</strong>
                                 <p class="text-muted text-sm">รองรับไฟล์ภาพ JPG, PNG (ระบบจะย่อขนาดอัตโนมัติเพื่อให้โหลดเร็ว)</p>
                             </div>
@@ -680,7 +680,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary btn-lg" id="submit-new-report-btn">🚀 ส่งรายงานและอัปโหลดรูป</button>
+                <button class="btn btn-primary btn-lg" id="submit-new-report-btn">ส่งรายงานและอัปโหลดรูป</button>
             </div>
         </div>
     </div>
@@ -709,15 +709,15 @@
                 <div class="form-group mt-2">
                     <label>ปรับสถานะของห้องน้ำจุดนี้ทันที</label>
                     <select id="detail-toilet-status" class="form-control">
-                        <option value="ปกติ">✅ ซ่อมเสร็จแล้ว (เปิดใช้งานปกติ)</option>
-                        <option value="ทำความสะอาด">🧹 กำลังทำความสะอาด</option>
-                        <option value="ชำรุด">🚫 ชำรุด / ปิดซ่อมชั่วคราว</option>
+                        <option value="ปกติ">ซ่อมเสร็จแล้ว (เปิดใช้งานปกติ)</option>
+                        <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
+                        <option value="ชำรุด">ชำรุด / ปิดซ่อมชั่วคราว</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline-danger" id="delete-report-btn">🗑️ ลบใบแจ้งงานนี้</button>
-                <button class="btn btn-primary" id="update-report-toilet-btn">💾 อัปเดตสถานะห้องน้ำ</button>
+                <button class="btn btn-outline-danger" id="delete-report-btn">ลบใบแจ้งงานนี้</button>
+                <button class="btn btn-primary" id="update-report-toilet-btn">อัปเดตสถานะห้องน้ำ</button>
             </div>
         </div>
     </div>
@@ -757,7 +757,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline close-modal-btn">ยกเลิก</button>
-                <button class="btn btn-primary" id="save-user-btn">💾 บันทึกผู้ใช้งาน</button>
+                <button class="btn btn-primary" id="save-user-btn">บันทึกผู้ใช้งาน</button>
             </div>
         </div>
     </div>
