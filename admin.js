@@ -22,11 +22,12 @@ let locationsData = [
     { location_id: 3, building_id: 3, floor: 1, room_name: 'โซนทางเข้า U1', description: 'ด้านหลังเคาน์เตอร์ยืม-คืนหนังสือ' }
 ];
 
+// ลบไอคอนที่เป็นอิโมจิออกทั้งหมดตามโจทย์
 let amenitiesData = [
-    { amenity_id: 1, amenity_name: 'สายฉีดชำระ', icon_url: '💦' },
-    { amenity_id: 2, amenity_name: 'ห้องน้ำผู้พิการ', icon_url: '♿️' },
-    { amenity_id: 3, amenity_name: 'กระดาษทิชชู่', icon_url: '🧻' },
-    { amenity_id: 4, amenity_name: 'สบู่ล้างมือ', icon_url: '🧴' }
+    { amenity_id: 1, amenity_name: 'สายฉีดชำระ' },
+    { amenity_id: 2, amenity_name: 'ห้องน้ำผู้พิการ' },
+    { amenity_id: 3, amenity_name: 'กระดาษทิชชู่' },
+    { amenity_id: 4, amenity_name: 'สบู่ล้างมือ' }
 ];
 
 let toiletsData = [
@@ -48,13 +49,14 @@ let toiletAmenitiesData = [
 ];
 
 let usersData = [
-    { user_id: 1, display_name: 'ชนกนันท์ (Developer)', role: 'นักศึกษา', phone: '081-111-2222' },
-    { user_id: 2, display_name: 'อรณัฐ (Product Owner, Developer)', role: 'นักศึกษา', phone: '089-333-4444' },
-    { user_id: 3, display_name: 'สุพิชญา (Scrum Master, Developer)', role: 'นักศึกษา', phone: '086-555-6666' }
+    { user_id: 1, display_name: 'ชนกนันท์ (Admin)', role: 'นักศึกษา', phone: '081-111-2222' },
+    { user_id: 2, display_name: 'อรณัฐ (Developer)', role: 'นักศึกษา', phone: '089-333-4444' },
+    { user_id: 3, display_name: 'สุพิชญา (Scrum Master)', role: 'นักศึกษา', phone: '086-555-6666' }
 ];
 
 let adminsData = [
-    { admin_id: 1, user_id: 1, is_active: true }
+    { admin_id: 1, user_id: 1, is_active: true },
+    { admin_id: 2, user_id: 2, is_active: true }
 ];
 
 let reportsData = [
@@ -107,10 +109,10 @@ const app = {
         const badge = document.getElementById('db-connection-badge');
         if (isConnected) {
             badge.className = 'badge success';
-            badge.innerText = '🟢 เชื่อมต่อ Supabase จริงแล้ว';
+            badge.innerText = 'เชื่อมต่อ Supabase จริงแล้ว';
         } else {
             badge.className = 'badge warning';
-            badge.innerText = '⚡ โหมดข้อมูลจำลอง (ตั้งค่า DB ได้ที่เมนูซ้ายล่าง)';
+            badge.innerText = 'โหมดข้อมูลจำลอง (ตั้งค่า DB ได้ที่เมนูซ้ายล่าง)';
         }
     },
 
@@ -309,7 +311,7 @@ const app = {
     populateBuildingDropdowns() {
         const filterEl = document.getElementById('filter-building-toilet');
         const currentFilter = filterEl.value;
-        filterEl.innerHTML = `<option value="">🏢 แสดงทุกอาคาร</option>` +
+        filterEl.innerHTML = `<option value="">แสดงทุกอาคาร</option>` +
             buildingsData.map(b => `<option value="${b.building_id}">${b.building_name}</option>`).join('');
         filterEl.value = currentFilter;
 
@@ -388,7 +390,6 @@ const app = {
 
         tbody.innerHTML = filtered.map(t => {
             const statusBadge = t.status === 'ปกติ' ? 'success' : (t.status === 'ชำรุด' ? 'danger' : 'warning');
-            const statusIcon = t.status === 'ปกติ' ? '✅' : (t.status === 'ชำรุด' ? '🚫' : '🧹');
 
             // ดึงสิ่งอำนวยความสะดวกจากตารางเชื่อม toilet_amenities
             const linkedIds = toiletAmenitiesData
@@ -397,25 +398,25 @@ const app = {
 
             let tags = amenitiesData
                 .filter(a => linkedIds.includes(Number(a.amenity_id)))
-                .map(a => `<span class="amenity-tag">${a.icon_url || '✨'} ${a.amenity_name}</span>`)
+                .map(a => `<span class="amenity-tag">${a.amenity_name}</span>`)
                 .join('');
 
             if (!tags) {
-                if (t.has_bidet) tags += `<span class="amenity-tag">💦 สายฉีดชำระ</span>`;
-                if (t.has_disabled_access) tags += `<span class="amenity-tag">♿️ ผู้พิการ</span>`;
+                if (t.has_bidet) tags += `<span class="amenity-tag">สายฉีดชำระ</span>`;
+                if (t.has_disabled_access) tags += `<span class="amenity-tag">ผู้พิการ</span>`;
             }
 
             return `
             <tr>
                 <td><b>#${t.toilet_id}</b></td>
                 <td><b>${this.getBuildingName(t.building_id)}</b><br><span class="text-muted text-sm">ชั้น ${t.floor}</span></td>
-                <td>${t.location_text || '-'}<br><span class="text-muted text-sm">📍 ${t.location_lat || '-'}, ${t.location_lng || '-'}</span></td>
+                <td>${t.location_text || '-'}<br><span class="text-muted text-sm">พิกัด: ${t.location_lat || '-'}, ${t.location_lng || '-'}</span></td>
                 <td>${t.toilet_type || 'แยกเพศ'}</td>
                 <td>${tags || '<span class="text-muted text-sm">ไม่มีระบุ</span>'}</td>
-                <td><span class="badge ${statusBadge}">${statusIcon} ${t.status}</span></td>
+                <td><span class="badge ${statusBadge}">${t.status}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="app.openToiletModal(${t.toilet_id})">✏️ แก้ไข</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteToilet(${t.toilet_id})">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="app.openToiletModal(${t.toilet_id})">แก้ไข</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteToilet(${t.toilet_id})">ลบ</button>
                 </td>
             </tr>`;
         }).join('');
@@ -432,8 +433,8 @@ const app = {
                 <td>${b.description || '-'}</td>
                 <td><span class="badge success">${count} จุดห้องน้ำ</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="app.openBuildingModal(${b.building_id})">✏️ แก้ไข</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteBuilding(${b.building_id})">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="app.openBuildingModal(${b.building_id})">แก้ไข</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteBuilding(${b.building_id})">ลบ</button>
                 </td>
             </tr>`;
         }).join('');
@@ -449,8 +450,8 @@ const app = {
                 <td><b>${loc.room_name}</b></td>
                 <td>${loc.description || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="app.openLocationModal(${loc.location_id})">✏️ แก้ไข</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteLocation(${loc.location_id})">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="app.openLocationModal(${loc.location_id})">แก้ไข</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteLocation(${loc.location_id})">ลบ</button>
                 </td>
             </tr>
         `).join('');
@@ -461,11 +462,10 @@ const app = {
         tbody.innerHTML = amenitiesData.map(a => `
             <tr>
                 <td><b>#${a.amenity_id}</b></td>
-                <td style="font-size: 24px;">${a.icon_url || '✨'}</td>
                 <td><b>${a.amenity_name}</b></td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="app.openAmenityModal(${a.amenity_id})">✏️ แก้ไข</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteAmenity(${a.amenity_id})">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="app.openAmenityModal(${a.amenity_id})">แก้ไข</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteAmenity(${a.amenity_id})">ลบ</button>
                 </td>
             </tr>
         `).join('');
@@ -495,7 +495,7 @@ const app = {
                 <td>${r.status_detail || '-'}</td>
                 <td>${imgHtml}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="app.openReportDetail(${r.report_id})">🔍 ดูรูป / อัปเดตสถานะ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="app.openReportDetail(${r.report_id})">ดูรูป / อัปเดตสถานะ</button>
                 </td>
             </tr>`;
         }).join('');
@@ -514,7 +514,7 @@ const app = {
                 <td style="color:#F59E0B; font-size: 16px;">${'★'.repeat(rev.rating)}${'☆'.repeat(5 - rev.rating)} (${rev.rating}/5)</td>
                 <td>${rev.review_text || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteReview('${rev.review_id}')">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteReview('${rev.review_id}')">ลบ</button>
                 </td>
             </tr>`;
         }).join('');
@@ -530,9 +530,9 @@ const app = {
                 <td><b>${u.display_name}</b></td>
                 <td>${u.role || 'นักศึกษา'}</td>
                 <td>${u.phone || '-'}</td>
-                <td>${isAdmin ? '<span class="badge success">🛡️ ผู้ดูแลระบบ (Admin)</span>' : '<span class="text-muted text-sm">ผู้ใช้ทั่วไป</span>'}</td>
+                <td>${isAdmin ? '<span class="badge success">ผู้ดูแลระบบ (Admin)</span>' : '<span class="text-muted text-sm">ผู้ใช้ทั่วไป</span>'}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteUser(${u.user_id})">🗑️ ลบ</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteUser(${u.user_id})">ลบ</button>
                 </td>
             </tr>`;
         }).join('');
@@ -550,7 +550,7 @@ const app = {
         container.innerHTML = amenitiesData.map(a => `
             <label class="checkbox-container">
                 <input type="checkbox" class="toilet-amenity-cb" value="${a.amenity_id}" data-name="${a.amenity_name}">
-                <span>${a.icon_url || '✨'} ${a.amenity_name}</span>
+                <span>${a.amenity_name}</span>
             </label>
         `).join('');
 
@@ -803,7 +803,6 @@ const app = {
             if (!a) return;
             document.getElementById('form-amenity-id').value = a.amenity_id;
             document.getElementById('form-amenity-name').value = a.amenity_name;
-            document.getElementById('form-amenity-icon').value = a.icon_url || '✨';
             document.getElementById('amenity-modal-title').innerText = `แก้ไขสิ่งอำนวยความสะดวก #${a.amenity_id}`;
         } else {
             document.getElementById('form-amenity-id').value = '';
@@ -815,26 +814,25 @@ const app = {
     async saveAmenity() {
         const id = document.getElementById('form-amenity-id').value;
         const amenity_name = document.getElementById('form-amenity-name').value.trim();
-        const icon_url = document.getElementById('form-amenity-icon').value.trim() || '✨';
 
         if (!amenity_name) return this.showToast('กรุณากรอกชื่อสิ่งอำนวยความสะดวก', 'error');
 
         if (supabaseClient) {
             if (id) {
-                const { error } = await supabaseClient.from('amenities').update({ amenity_name, icon_url }).eq('amenity_id', id);
+                const { error } = await supabaseClient.from('amenities').update({ amenity_name }).eq('amenity_id', id);
                 if (error) return this.showToast(error.message, 'error');
             } else {
-                const { error } = await supabaseClient.from('amenities').insert([{ amenity_name, icon_url }]);
+                const { error } = await supabaseClient.from('amenities').insert([{ amenity_name }]);
                 if (error) return this.showToast(error.message, 'error');
             }
             await this.syncFromSupabase();
         } else {
             if (id) {
                 const idx = amenitiesData.findIndex(x => Number(x.amenity_id) === Number(id));
-                amenitiesData[idx] = { ...amenitiesData[idx], amenity_name, icon_url };
+                amenitiesData[idx] = { ...amenitiesData[idx], amenity_name };
             } else {
                 const newId = amenitiesData.reduce((m, x) => Math.max(m, Number(x.amenity_id)), 0) + 1;
-                amenitiesData.push({ amenity_id: newId, amenity_name, icon_url });
+                amenitiesData.push({ amenity_id: newId, amenity_name });
             }
             this.renderAllViews();
         }

@@ -22,7 +22,7 @@
         <div class="login-wrapper">
             <div class="login-card">
                 <div class="login-header">
-                    <div class="login-logo">🚽 ปลดปล่อย (Plod-Ploi)</div>
+                    <div class="login-logo">ปลดปล่อย (Plod-Ploi)</div>
                     <p class="login-subtitle">ระบบบริหารจัดการข้อมูลห้องน้ำและสิ่งอำนวยความสะดวก<br>มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์</p>
                 </div>
                 <form id="login-form">
@@ -34,7 +34,7 @@
                         <label for="password-input">รหัสผ่าน</label>
                         <div class="password-wrapper">
                             <input type="password" id="password-input" class="form-control" placeholder="กรอกรหัสผ่าน" value="1234" required>
-                            <button type="button" id="toggle-password-btn" class="icon-btn" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+                            <button type="button" id="toggle-password-btn" class="icon-btn" title="แสดง/ซ่อนรหัสผ่าน">แสดง/ซ่อน</button>
                         </div>
                     </div>
                     <div class="form-options">
@@ -61,8 +61,8 @@
         <!-- แถบเมนูด้านซ้าย (Sidebar) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-brand">PlodPloi_Admin</div>
-                <button class="icon-btn mobile-close-btn" id="close-sidebar-btn">✕</button>
+                <div class="sidebar-brand">ปลดปล่อย Admin</div>
+                <button class="icon-btn mobile-close-btn" id="close-sidebar-btn">X</button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-title">ภาพรวมและการแจ้งเตือน</div>
@@ -109,7 +109,7 @@
             <!-- แถบด้านบน (Header) -->
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="icon-btn hamburger-btn" id="open-sidebar-btn">☰</button>
+                    <button class="icon-btn hamburger-btn" id="open-sidebar-btn">=</button>
                     <h2 class="page-title" id="current-page-title">ภาพรวมระบบ</h2>
                 </div>
                 <div class="topbar-right">
@@ -126,7 +126,7 @@
             <!-- พื้นที่แสดงผลแต่ละหน้า -->
             <div class="page-container">
                 
-                <!-- 1. หน้า ภาพรวมระบบ (Dashboard) -->
+                <!-- หน้า ภาพรวมระบบ (Dashboard) -->
                 <div id="page-dashboard" class="page-section active">
                     <div class="helper-banner">
                         <div>
@@ -199,7 +199,7 @@
                     </div>
                 </div>
 
-                <!-- 2. หน้า จัดการห้องน้ำ (Toilets) -->
+                <!-- หน้า จัดการห้องน้ำ (Toilets) -->
                 <div id="page-toilets" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -244,11 +244,11 @@
                     </div>
                 </div>
 
-                <!-- 3. หน้า จัดการอาคาร (Buildings) -->
+                <!-- หน้า จัดการอาคาร (Buildings) -->
                 <div id="page-buildings" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
-                            <strong>🏢 การจัดการข้อมูลอาคาร (ตาราง buildings)</strong>
+                            <strong>การจัดการข้อมูลอาคาร (ตาราง buildings)</strong>
                             <p>รายชื่อตึกและคณะต่างๆ ใน มธ. ท่าพระจันทร์ เมื่อเพิ่มตึกที่นี่แล้ว จะสามารถนำไปเลือกตอนสร้างห้องน้ำหรือจุดอ้างอิงได้</p>
                         </div>
                         <button class="btn btn-primary btn-lg" id="add-building-btn">+ เพิ่มอาคารใหม่</button>
@@ -272,7 +272,7 @@
                     </div>
                 </div>
 
-                <!-- 4. หน้า จัดการจุดอ้างอิงในตึก (Locations) -->
+                <!-- หน้า จัดการจุดอ้างอิงในตึก (Locations) -->
                 <div id="page-locations" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -301,7 +301,7 @@
                     </div>
                 </div>
 
-                <!-- 5. หน้า จัดการสิ่งอำนวยความสะดวก (Amenities) -->
+                <!-- หน้า จัดการสิ่งอำนวยความสะดวก (Amenities) -->
                 <div id="page-amenities" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -317,7 +317,6 @@
                                 <thead>
                                     <tr>
                                         <th>รหัส (ID)</th>
-                                        <th>สัญลักษณ์ (Icon)</th>
                                         <th>ชื่อสิ่งอำนวยความสะดวก</th>
                                         <th>ปุ่มจัดการ</th>
                                     </tr>
@@ -328,14 +327,14 @@
                     </div>
                 </div>
 
-                <!-- 6. หน้า รายงานแจ้งซ่อม/ปัญหา (Reports + อัปโหลดรูป) -->
+                <!-- หน้า รายงานแจ้งซ่อม/ปัญหา (Reports + อัปโหลดรูป) -->
                 <div id="page-reports" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
                             <strong>รายการแจ้งปัญหาห้องน้ำชำรุด / อัปโหลดรูปภาพ (ตาราง reports)</strong>
                             <p>ตรวจสอบรายการที่ผู้ใช้แจ้งเข้ามาพร้อมรูปถ่าย หรือกดปุ่มด้านขวาเพื่อบันทึกแจ้งปัญหาใหม่พร้อมแนบรูปภาพประกอบ</p>
                         </div>
-                        <button class="btn btn-primary btn-lg" id="add-report-btn">แจ้งปัญหาใหม่ (พร้อมแนบรูป)</button>
+                        <button class="btn btn-primary btn-lg" id="add-report-btn">+ แจ้งปัญหาใหม่ (พร้อมแนบรูป)</button>
                     </div>
 
                     <div class="action-bar">
@@ -343,7 +342,7 @@
                             <select class="form-control" id="filter-type-report">
                                 <option value="">แสดงทุกประเภทปัญหา</option>
                                 <option value="น้ำไม่ไหล">น้ำไม่ไหล</option>
-                                <option value="ประตูปิดซ่อม">ประตูปิดซ่อม / ชำรุด</option>
+                                <option value="ประตูปิดซ่อม">ประตูปิดซ่อม / อุปกรณ์ชำรุด</option>
                                 <option value="ปิดทำความสะอาด">ปิดทำความสะอาด</option>
                                 <option value="อื่นๆ">อื่นๆ (เช่น ทิชชู่หมด, พื้นเปียก)</option>
                             </select>
@@ -370,7 +369,7 @@
                     </div>
                 </div>
 
-                <!-- 7. หน้า รีวิวและคะแนน (Reviews) -->
+                <!-- หน้า รีวิวและคะแนน (Reviews) -->
                 <div id="page-reviews" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -398,7 +397,7 @@
                     </div>
                 </div>
 
-                <!-- 8. หน้า ผู้ใช้งานและแอดมิน (Users & Admin) -->
+                <!-- หน้า ผู้ใช้งานและแอดมิน (Users & Admin) -->
                 <div id="page-users" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -426,7 +425,7 @@
                     </div>
                 </div>
 
-                <!-- 9. หน้า ตั้งค่าเชื่อมต่อ Supabase (Settings) -->
+                <!-- หน้า ตั้งค่าเชื่อมต่อ Supabase (Settings) -->
                 <div id="page-settings" class="page-section hidden">
                     <div class="helper-banner">
                         <div>
@@ -476,7 +475,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h3 id="toilet-modal-title">เพิ่มข้อมูลห้องน้ำ</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="toilet-form">
@@ -547,7 +546,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="building-modal-title">เพิ่มข้อมูลอาคาร</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="building-form">
@@ -574,7 +573,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="location-modal-title">เพิ่มจุดอ้างอิงในอาคาร</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="location-form">
@@ -609,7 +608,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="amenity-modal-title">เพิ่มสิ่งอำนวยความสะดวก</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="amenity-form">
@@ -617,10 +616,6 @@
                     <div class="form-group">
                         <label>ชื่อสิ่งอำนวยความสะดวก <span class="text-danger">*</span></label>
                         <input type="text" id="form-amenity-name" class="form-control" placeholder="เช่น สายฉีดชำระ, กระดาษทิชชู่, ห้องน้ำผู้พิการ" required>
-                    </div>
-                    <div class="form-group">
-                        <label>ไอคอนสัญลักษณ์ (ใส่ข้อความ)</label>
-                        <input type="text" id="form-amenity-icon" class="form-control" placeholder="เช่น สายฉีดชำระ, ห้องน้ำผู้พิการ, กระดาษทิชชู่, สบู่ล้างมือ">
                     </div>
                 </form>
             </div>
@@ -636,7 +631,7 @@
         <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h3>แจ้งปัญหาห้องน้ำ / อัปโหลดรูปภาพประกอบ</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="new-report-form">
@@ -666,13 +661,13 @@
                         <div class="upload-box" id="upload-box-area">
                             <input type="file" id="form-report-photo" accept="image/*" class="file-input">
                             <div id="upload-placeholder">
-                                <div style="font-size: 32px; margin-bottom: 8px;"></div>
+                                <div style="font-size: 16px; margin-bottom: 8px;">อัปโหลดรูปภาพ</div>
                                 <strong>คลิกที่นี่เพื่อเลือกรูปภาพ หรือถ่ายภาพ</strong>
                                 <p class="text-muted text-sm">รองรับไฟล์ภาพ JPG, PNG (ระบบจะย่อขนาดอัตโนมัติเพื่อให้โหลดเร็ว)</p>
                             </div>
                             <div id="upload-preview-container" class="hidden">
                                 <img id="upload-preview-img" src="" alt="ตัวอย่างรูปภาพ">
-                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="remove-photo-btn">✕ เปลี่ยนรูปภาพ</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" id="remove-photo-btn">X เปลี่ยนรูปภาพ</button>
                             </div>
                         </div>
                     </div>
@@ -690,7 +685,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>จัดการปัญหาที่แจ้ง <span id="detail-report-id" class="text-muted text-sm"></span></h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <div class="report-detail-group">
@@ -727,7 +722,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>เพิ่มผู้ใช้งานในระบบ</h3>
-                <button class="icon-btn close-modal-btn">✕</button>
+                <button class="icon-btn close-modal-btn">X</button>
             </div>
             <div class="modal-body">
                 <form id="user-form">
