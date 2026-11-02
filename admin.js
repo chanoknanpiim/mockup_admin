@@ -48,14 +48,13 @@ let toiletAmenitiesData = [
 ];
 
 let usersData = [
-    { user_id: 1, display_name: 'ชนกนันท์ (Admin)', role: 'นักศึกษา', phone: '081-111-2222' },
-    { user_id: 2, display_name: 'อรณัฐ (Developer)', role: 'นักศึกษา', phone: '089-333-4444' },
-    { user_id: 3, display_name: 'สุพิชญา (Scrum Master)', role: 'นักศึกษา', phone: '086-555-6666' }
+    { user_id: 1, display_name: 'ชนกนันท์ (Developer)', role: 'นักศึกษา', phone: '081-111-2222' },
+    { user_id: 2, display_name: 'อรณัฐ (Product Owner, Developer)', role: 'นักศึกษา', phone: '089-333-4444' },
+    { user_id: 3, display_name: 'สุพิชญา (Scrum Master, Developer)', role: 'นักศึกษา', phone: '086-555-6666' }
 ];
 
 let adminsData = [
-    { admin_id: 1, user_id: 1, is_active: true },
-    { admin_id: 2, user_id: 2, is_active: true }
+    { admin_id: 1, user_id: 1, is_active: true }
 ];
 
 let reportsData = [
