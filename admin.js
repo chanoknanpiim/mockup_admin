@@ -8,39 +8,46 @@ const DEFAULT_SUPABASE_KEY = '';
 let supabaseClient = null;
 let currentPhotoDataUrl = ''; // เก็บรูปภาพที่ผู้ใช้เลือกตอนแจ้งซ่อม
 
-// ข้อมูลเริ่มต้น (อ้างอิงตามโครงสร้างตารางใน Supabase ของโปรเจกต์ "ปลดปล่อย")
+// ข้อมูลเริ่มต้น (อัปเดตรายชื่อ 9 คณะ/วิทยาลัย ใน มธ. ท่าพระจันทร์)
 let buildingsData = [
-    { building_id: 1, building_name: 'คณะศิลปศาสตร์', description: 'อาคารเรียนรวมและโถงอ่านหนังสือ ใกล้ประตูท่าพระจันทร์' },
-    { building_id: 2, building_name: 'คณะนิติศาสตร์', description: 'อาคารเรียนติดสนามฟุตบอล' },
-    { building_id: 3, building_name: 'หอสมุดปรีดี พนมยงค์', description: 'ห้องสมุดใต้ดิน เปิดให้บริการทุกวัน' },
-    { building_id: 4, building_name: 'คณะพาณิชยศาสตร์และการบัญชี', description: 'อาคารริมแม่น้ำเจ้าพระยา' }
+    { building_id: 1, building_name: 'คณะนิติศาสตร์', description: 'เปิดสอนทั้งท่าพระจันทร์ รังสิต และลำปาง' },
+    { building_id: 2, building_name: 'คณะพาณิชยศาสตร์และการบัญชี', description: 'หลักสูตรนานาชาติ BBA และโครงการพิเศษ' },
+    { building_id: 3, building_name: 'คณะรัฐศาสตร์', description: 'หลักสูตรนานาชาติ BMIR' },
+    { building_id: 4, building_name: 'คณะเศรษฐศาสตร์', description: 'หลักสูตรนานาชาติ BE' },
+    { building_id: 5, building_name: 'คณะศิลปศาสตร์', description: 'โครงการอังกฤษ-อเมริกันศึกษา BAS' },
+    { building_id: 6, building_name: 'คณะวารสารศาสตร์และสื่อสารมวลชน', description: 'บางหลักสูตร/โครงการพิเศษ' },
+    { building_id: 7, building_name: 'วิทยาลัยสหวิทยาการ', description: 'วิทยาลัยสหวิทยาการ มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์' },
+    { building_id: 8, building_name: 'วิทยาลัยนวัตกรรม', description: 'มีชั้น 3-5' },
+    { building_id: 9, building_name: 'วิทยาลัยนานาชาติปรีดี พนมยงค์', description: '' }
 ];
 
+// กำหนดจุดอ้างอิงให้วิทยาลัยนวัตกรรม (ID: 8)
 let locationsData = [
-    { location_id: 1, building_id: 1, floor: 1, room_name: 'โถงลิฟต์หลัก ชั้น 1', description: 'เดินตรงจากทางเข้าหลัก เลี้ยวซ้ายข้างลิฟต์' },
-    { location_id: 2, building_id: 2, floor: 2, room_name: 'หน้าห้องบรรยาย 201', description: 'อยู่สุดทางเดินฝั่งทิศเหนือ' },
-    { location_id: 3, building_id: 3, floor: 1, room_name: 'โซนทางเข้า U1', description: 'ด้านหลังเคาน์เตอร์ยืม-คืนหนังสือ' }
+    { location_id: 1, building_id: 8, floor: 3, room_name: 'ข้างห้องเรียน CITU 301', description: 'วิทยาลัยนวัตกรรม ชั้น 3' },
+    { location_id: 2, building_id: 8, floor: 4, room_name: 'ข้างห้องพักอาจารย์', description: 'วิทยาลัยนวัตกรรม ชั้น 4' },
+    { location_id: 3, building_id: 8, floor: 4, room_name: 'ข้างห้องคอมม่อน', description: 'วิทยาลัยนวัตกรรม ชั้น 5' }
 ];
 
-// ลบไอคอนที่เป็นอิโมจิออกทั้งหมดตามโจทย์
 let amenitiesData = [
     { amenity_id: 1, amenity_name: 'สายฉีดชำระ' },
     { amenity_id: 2, amenity_name: 'ห้องน้ำผู้พิการ' },
     { amenity_id: 3, amenity_name: 'กระดาษทิชชู่' },
-    { amenity_id: 4, amenity_name: 'สบู่ล้างมือ' }
+    { amenity_id: 4, amenity_name: 'สบู่ล้างมือ' },
+    { amenity_id: 5, amenity_name: 'ผ้าอนามัย' }
 ];
 
+// ตั้งค่าห้องน้ำให้อยู่ที่วิทยาลัยนวัตกรรม
 let toiletsData = [
-    { toilet_id: 101, building_id: 1, floor: 1, location_lat: 13.7563, location_lng: 100.4902, location_text: 'ข้างลิฟต์ฝั่งทิศเหนือ', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: true, status: 'ปกติ' },
-    { toilet_id: 102, building_id: 2, floor: 2, location_lat: 13.7558, location_lng: 100.4910, location_text: 'ติดบันไดกลาง ชั้น 2', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: false, status: 'ทำความสะอาด' },
-    { toilet_id: 103, building_id: 3, floor: 1, location_lat: 13.7570, location_lng: 100.4895, location_text: 'ชั้น U1 โซนอ่านหนังสือ', toilet_type: 'รวม', has_bidet: false, has_disabled_access: true, status: 'ชำรุด' },
-    { toilet_id: 104, building_id: 4, floor: 1, location_lat: 13.7565, location_lng: 100.4890, location_text: 'ชั้น G ใกล้ทางออกท่าเรือ', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: true, status: 'ปกติ' }
+    { toilet_id: 101, building_id: 8, floor: 3, location_lat: 13.7563, location_lng: 100.4902, location_text: 'ข้างห้องเรียน 301', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: false, status: 'ปกติ' },
+    { toilet_id: 102, building_id: 8, floor: 4, location_lat: 13.7558, location_lng: 100.4910, location_text: 'ใกล้ห้องพักอาจารย์', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: false, status: 'ทำความสะอาด' },
+    { toilet_id: 103, building_id: 8, floor: 4, location_lat: 13.7570, location_lng: 100.4895, location_text: 'ข้างห้องคอมม่อน', toilet_type: 'รวม', has_bidet: false, has_disabled_access: true, status: 'ชำรุด' },
+    { toilet_id: 104, building_id: 7, floor: 1, location_lat: 13.7565, location_lng: 100.4890, location_text: 'โถงทางเข้าหลัก', toilet_type: 'แยกเพศ', has_bidet: true, has_disabled_access: true, status: 'ปกติ' }
 ];
 
 let toiletAmenitiesData = [
     { toilet_amenities_id: 1, toilet_id: 101, amenity_id: 1 },
-    { toilet_amenities_id: 2, toilet_id: 101, amenity_id: 2 },
-    { toilet_amenities_id: 3, toilet_id: 101, amenity_id: 3 },
+    { toilet_amenities_id: 2, toilet_id: 101, amenity_id: 3 },
+    { toilet_amenities_id: 3, toilet_id: 101, amenity_id: 5 },
     { toilet_amenities_id: 4, toilet_id: 102, amenity_id: 1 },
     { toilet_amenities_id: 5, toilet_id: 103, amenity_id: 2 },
     { toilet_amenities_id: 6, toilet_id: 104, amenity_id: 1 },
@@ -48,10 +55,11 @@ let toiletAmenitiesData = [
     { toilet_amenities_id: 8, toilet_id: 104, amenity_id: 4 }
 ];
 
+// ลบหน้าที่ในวงเล็บออกทั้งหมด
 let usersData = [
-    { user_id: 1, display_name: 'ชนกนันท์ (Admin)', role: 'นักศึกษา', phone: '081-111-2222' },
-    { user_id: 2, display_name: 'อรณัฐ (Developer)', role: 'นักศึกษา', phone: '089-333-4444' },
-    { user_id: 3, display_name: 'สุพิชญา (Scrum Master)', role: 'นักศึกษา', phone: '086-555-6666' }
+    { user_id: 1, display_name: 'ชนกนันท์', role: 'นักศึกษา', phone: '081-111-2222' },
+    { user_id: 2, display_name: 'อรณัฐ', role: 'นักศึกษา', phone: '089-333-4444' },
+    { user_id: 3, display_name: 'สุพิชญา', role: 'นักศึกษา', phone: '086-555-6666' }
 ];
 
 let adminsData = [
@@ -59,13 +67,14 @@ let adminsData = [
     { admin_id: 2, user_id: 2, is_active: true }
 ];
 
+// แก้ไขรายงานแจ้งซ่อมให้อ้างอิงวิทยาลัยนวัตกรรม ชั้น 3
 let reportsData = [
-    { report_id: 1001, created_at: '2026-11-02 09:30', toilet_id: 103, user_id: 2, status_type: 'ประตูปิดซ่อม', status_detail: 'ก๊อกน้ำอ่างล้างมือหัก น้ำพุ่งตลอดเวลา', photo_url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80' },
-    { report_id: 1002, created_at: '2026-11-02 10:15', toilet_id: 102, user_id: 3, status_type: 'ปิดทำความสะอาด', status_detail: 'แม่บ้านกำลังล้างพื้นห้องน้ำ คาดว่าเสร็จใน 30 นาที', photo_url: '' }
+    { report_id: 1001, created_at: '2026-11-03 14:15', toilet_id: 101, user_id: 2, status_type: 'น้ำไม่ไหล', status_detail: 'ก๊อกน้ำอ่างล้างมือข้างห้องเรียน 301 น้ำไม่ไหลค่ะ', photo_url: 'https://i.ibb.co/Vp8pC7X/IMG-7913.jpg' },
+    { report_id: 1002, created_at: '2026-11-03 10:15', toilet_id: 102, user_id: 3, status_type: 'ปิดทำความสะอาด', status_detail: 'แม่บ้านกำลังล้างพื้นห้องน้ำ ชั้น 4 คาดว่าเสร็จใน 30 นาที', photo_url: '' }
 ];
 
 let reviewsData = [
-    { review_id: 'REV-01', created_at: '2026-11-01', toilet_id: 101, user_id: 2, rating: 5, review_text: 'สะอาดมาก มีสายฉีดชำระและทิชชู่ครบครับ' },
+    { review_id: 'REV-01', created_at: '2026-11-02', toilet_id: 101, user_id: 2, rating: 5, review_text: 'สะอาดมาก มีสายฉีดชำระ ทิชชู่ และผ้าอนามัยครบค่ะ' },
     { review_id: 'REV-02', created_at: '2026-11-01', toilet_id: 103, user_id: 3, rating: 3, review_text: 'แอร์เย็นดี แต่ก๊อกน้ำอ่างล้างมือชำรุด 1 จุด' },
     { review_id: 'REV-03', created_at: '2026-10-30', toilet_id: 104, user_id: 1, rating: 5, review_text: 'ห้องน้ำกว้างขวาง สะอาด ลมโกรกดีมาก' }
 ];
@@ -154,7 +163,6 @@ const app = {
     },
 
     bindEvents() {
-        // การเข้าสู่ระบบ
         document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('toggle-password-btn').addEventListener('click', this.togglePassword);
         document.getElementById('logout-btn').addEventListener('click', () => this.handleLogout());
@@ -163,7 +171,6 @@ const app = {
             this.showToast('อัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว', 'success');
         });
 
-        // เมนู Sidebar
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const target = e.target.closest('.nav-item').getAttribute('data-target');
@@ -176,7 +183,6 @@ const app = {
         document.getElementById('open-sidebar-btn').addEventListener('click', () => document.getElementById('sidebar').classList.add('open'));
         document.getElementById('close-sidebar-btn').addEventListener('click', () => document.getElementById('sidebar').classList.remove('open'));
 
-        // ปิด Modal ทุกตัว
         document.querySelectorAll('.close-modal-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modal = e.target.closest('.modal-overlay');
@@ -184,26 +190,26 @@ const app = {
             });
         });
 
-        // 1. เหตุการณ์จัดการห้องน้ำ (Toilets)
+        // 1. จัดการห้องน้ำ
         document.getElementById('add-toilet-btn').addEventListener('click', () => this.openToiletModal());
         document.getElementById('save-toilet-btn').addEventListener('click', () => this.saveToilet());
         document.getElementById('search-toilet').addEventListener('input', () => this.renderToilets());
         document.getElementById('filter-building-toilet').addEventListener('change', () => this.renderToilets());
         document.getElementById('filter-status-toilet').addEventListener('change', () => this.renderToilets());
 
-        // 2. เหตุการณ์จัดการอาคาร (Buildings)
+        // 2. จัดการอาคาร
         document.getElementById('add-building-btn').addEventListener('click', () => this.openBuildingModal());
         document.getElementById('save-building-btn').addEventListener('click', () => this.saveBuilding());
 
-        // 3. เหตุการณ์จัดการจุดอ้างอิง (Locations)
+        // 3. จัดการจุดอ้างอิง
         document.getElementById('add-location-btn').addEventListener('click', () => this.openLocationModal());
         document.getElementById('save-location-btn').addEventListener('click', () => this.saveLocation());
 
-        // 4. เหตุการณ์จัดการสิ่งอำนวยความสะดวก (Amenities)
+        // 4. จัดการสิ่งอำนวยความสะดวก
         document.getElementById('add-amenity-btn').addEventListener('click', () => this.openAmenityModal());
         document.getElementById('save-amenity-btn').addEventListener('click', () => this.saveAmenity());
 
-        // 5. เหตุการณ์แจ้งปัญหา + อัปโหลดรูปภาพ (Reports)
+        // 5. แจ้งปัญหา
         document.getElementById('add-report-btn').addEventListener('click', () => this.openNewReportModal());
         document.getElementById('form-report-photo').addEventListener('change', (e) => this.handlePhotoSelect(e));
         document.getElementById('remove-photo-btn').addEventListener('click', () => this.clearSelectedPhoto());
@@ -212,7 +218,7 @@ const app = {
         document.getElementById('update-report-toilet-btn').addEventListener('click', () => this.updateToiletStatusFromReport());
         document.getElementById('delete-report-btn').addEventListener('click', () => this.deleteReportFromModal());
 
-        // 6. เหตุการณ์ผู้ใช้งาน & ตั้งค่า
+        // 6. ผู้ใช้งาน & ตั้งค่า
         document.getElementById('add-user-btn').addEventListener('click', () => {
             document.getElementById('user-form').reset();
             this.openModal('user-modal');
@@ -331,7 +337,6 @@ const app = {
         document.getElementById('stat-cleaning-toilets').innerText = cleaning;
         document.getElementById('stat-broken-toilets').innerText = broken;
 
-        // คำนวณกราฟวงกลมจริง
         const pNormal = total ? Math.round((normal / total) * 100) : 0;
         const pCleaning = total ? Math.round((cleaning / total) * 100) : 0;
         const pBroken = total ? Math.max(0, 100 - pNormal - pCleaning) : 0;
@@ -391,7 +396,6 @@ const app = {
         tbody.innerHTML = filtered.map(t => {
             const statusBadge = t.status === 'ปกติ' ? 'success' : (t.status === 'ชำรุด' ? 'danger' : 'warning');
 
-            // ดึงสิ่งอำนวยความสะดวกจากตารางเชื่อม toilet_amenities
             const linkedIds = toiletAmenitiesData
                 .filter(ta => Number(ta.toilet_id) === Number(t.toilet_id))
                 .map(ta => Number(ta.amenity_id));
@@ -545,7 +549,6 @@ const app = {
         document.getElementById('toilet-form').reset();
         this.populateBuildingDropdowns();
 
-        // สร้าง Checkbox สิ่งอำนวยความสะดวกจากตาราง amenities
         const container = document.getElementById('form-toilet-amenities-list');
         container.innerHTML = amenitiesData.map(a => `
             <label class="checkbox-container">
@@ -620,7 +623,6 @@ const app = {
                 if (data && data[0]) savedToiletId = data[0].toilet_id;
             }
 
-            // อัปเดตตารางเชื่อม toilet_amenities
             await supabaseClient.from('toilet_amenities').delete().eq('toilet_id', savedToiletId);
             if (selectedAmenityIds.length > 0) {
                 const taRows = selectedAmenityIds.map(aid => ({ toilet_id: savedToiletId, amenity_id: aid }));
@@ -868,7 +870,6 @@ const app = {
         this.openModal('new-report-modal');
     },
 
-    // ย่อและแปลงรูปภาพอัตโนมัติ เพื่อให้บันทึกได้ทั้งใน Supabase Storage และคอลัมน์ photo_url
     handlePhotoSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -919,7 +920,6 @@ const app = {
 
         let finalPhotoUrl = currentPhotoDataUrl;
 
-        // หากเชื่อมต่อ Supabase แล้ว และมี Bucket Storage จะลองอัปโหลดขึ้น Storage ก่อน
         if (supabaseClient && fileInput.files[0]) {
             const bucket = localStorage.getItem('plodploi_storage_bucket') || 'report-photos';
             const file = fileInput.files[0];
@@ -947,7 +947,6 @@ const app = {
             photo_url: finalPhotoUrl
         };
 
-        // อัปเดตสถานะห้องน้ำตามประเภทที่แจ้งอัตโนมัติ
         const mappedToiletStatus = status_type === 'ปิดทำความสะอาด' ? 'ทำความสะอาด' : 'ชำรุด';
 
         if (supabaseClient) {
