@@ -3,12 +3,12 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 export const ENV_SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.EXPO_PUBLIC_SUPABASE_URL ||
-  '';
+  'https://wotvrvrfpwinvaagwnle.supabase.co';
 
 export const ENV_SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.EXPO_PUBLIC_SUPABASE_KEY ||
-  '';
+  'sb_publishable_Jw87Rp6PXwOFTW0v2Arlnw_RghodbjG';
 
 export const ENV_STORAGE_BUCKET =
   process.env.NEXT_PUBLIC_STORAGE_BUCKET || 'report-photos';
