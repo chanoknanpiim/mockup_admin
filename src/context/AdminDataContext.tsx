@@ -94,12 +94,14 @@ interface AdminDataContextType {
   reviews: ReviewItem[];
   isConnected: boolean;
   isLoading: boolean;
+  rlsBlocked: boolean;
   supabaseUrl: string;
   supabaseKey: string;
   storageBucket: string;
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error') => void;
   syncFromSupabase: (silent?: boolean) => Promise<void>;
+  seedBuildingsToSupabase: () => Promise<boolean>;
   getBuildingName: (buildingId: number) => string;
   getToiletLabel: (toiletId: number) => string;
   saveToilet: (input: SaveToiletInput) => Promise<boolean>;
@@ -126,6 +128,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [rlsBlocked, setRlsBlocked] = useState<boolean>(false);
 
   const [supabaseUrl, setSupabaseUrl] = useState<string>(ENV_SUPABASE_URL);
   const [supabaseKey, setSupabaseKey] = useState<string>(ENV_SUPABASE_KEY);
@@ -175,19 +178,21 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
 
         if (!bRes.error && bRes.data && bRes.data.length > 0) {
           setBuildings(bRes.data);
+          setRlsBlocked(false);
           if (typeof window !== 'undefined') {
             localStorage.setItem('plodploi_buildings_cache', JSON.stringify(bRes.data));
           }
-        } else if (typeof window !== 'undefined') {
-          const cached = localStorage.getItem('plodploi_buildings_cache');
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (Array.isArray(parsed) && parsed.length > 0) setBuildings(parsed);
-            } catch {
-              setBuildings(INITIAL_BUILDINGS);
-            }
+        } else if (!bRes.error && bRes.data && bRes.data.length === 0) {
+          const { data: seeded, error: seedErr } = await client
+            .from('buildings')
+            .upsert(INITIAL_BUILDINGS, { onConflict: 'building_id' })
+            .select('*')
+            .order('building_id');
+          if (!seedErr && seeded && seeded.length > 0) {
+            setBuildings(seeded);
+            setRlsBlocked(false);
           } else {
+            if (seedErr) setRlsBlocked(true);
             setBuildings(INITIAL_BUILDINGS);
           }
         }
@@ -783,6 +788,34 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const seedBuildingsToSupabase = async (): Promise<boolean> => {
+    if (!supabaseClient) {
+      showToast('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
+      return false;
+    }
+    const { data, error } = await supabaseClient
+      .from('buildings')
+      .upsert(buildings.length > 0 ? buildings : INITIAL_BUILDINGS, { onConflict: 'building_id' })
+      .select('*')
+      .order('building_id');
+
+    if (error) {
+      setRlsBlocked(true);
+      showToast(
+        `Supabase ปฏิเสธการบันทึก (${error.code}): กรุณาปลดล็อก RLS ใน Supabase SQL Editor`,
+        'error'
+      );
+      return false;
+    }
+    if (data && data.length > 0) {
+      setBuildings(data);
+    }
+    setRlsBlocked(false);
+    await syncFromSupabase(true);
+    showToast('บันทึกรายชื่อคณะทั้งหมดลงตาราง buildings ใน Supabase สำเร็จ!', 'success');
+    return true;
+  };
+
   return (
     <AdminDataContext.Provider
       value={{
@@ -797,12 +830,14 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         reviews,
         isConnected,
         isLoading,
+        rlsBlocked,
         supabaseUrl,
         supabaseKey,
         storageBucket,
         toasts,
         showToast,
         syncFromSupabase,
+        seedBuildingsToSupabase,
         getBuildingName,
         getToiletLabel,
         saveToilet,
