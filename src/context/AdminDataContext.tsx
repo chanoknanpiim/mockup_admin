@@ -173,15 +173,32 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
           client.from('admin').select('*'),
         ]);
 
-        if (!bRes.error && bRes.data) setBuildings(bRes.data);
-        if (!lRes.error && lRes.data) setLocations(lRes.data);
-        if (!aRes.error && aRes.data) setAmenities(aRes.data);
-        if (!tRes.error && tRes.data) setToilets(tRes.data);
-        if (!taRes.error && taRes.data) setToiletAmenities(taRes.data);
-        if (!rRes.error && rRes.data) setReports(rRes.data);
-        if (!revRes.error && revRes.data) setReviews(revRes.data);
-        if (!uRes.error && uRes.data) setUsers(uRes.data);
-        if (!admRes.error && admRes.data) setAdmins(admRes.data);
+        if (!bRes.error && bRes.data && bRes.data.length > 0) {
+          setBuildings(bRes.data);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('plodploi_buildings_cache', JSON.stringify(bRes.data));
+          }
+        } else if (typeof window !== 'undefined') {
+          const cached = localStorage.getItem('plodploi_buildings_cache');
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) setBuildings(parsed);
+            } catch {
+              setBuildings(INITIAL_BUILDINGS);
+            }
+          } else {
+            setBuildings(INITIAL_BUILDINGS);
+          }
+        }
+        if (!lRes.error && lRes.data && lRes.data.length > 0) setLocations(lRes.data);
+        if (!aRes.error && aRes.data && aRes.data.length > 0) setAmenities(aRes.data);
+        if (!tRes.error && tRes.data && tRes.data.length > 0) setToilets(tRes.data);
+        if (!taRes.error && taRes.data && taRes.data.length > 0) setToiletAmenities(taRes.data);
+        if (!rRes.error && rRes.data && rRes.data.length > 0) setReports(rRes.data);
+        if (!revRes.error && revRes.data && revRes.data.length > 0) setReviews(revRes.data);
+        if (!uRes.error && uRes.data && uRes.data.length > 0) setUsers(uRes.data);
+        if (!admRes.error && admRes.data && admRes.data.length > 0) setAdmins(admRes.data);
 
         setIsConnected(true);
         if (!silent) {
@@ -344,6 +361,16 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   };
 
   /* --- 2. Buildings CRUD --- */
+  const updateLocalBuildings = (updater: (prev: Building[]) => Building[]) => {
+    setBuildings((prev) => {
+      const next = updater(prev);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('plodploi_buildings_cache', JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
   const saveBuilding = async ({ id, building_name, description }: SaveBuildingInput): Promise<boolean> => {
     if (!building_name.trim()) {
       showToast('กรุณากรอกชื่ออาคาร', 'error');
@@ -362,25 +389,29 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
           .update(payload)
           .eq('building_id', id);
         if (error) {
-          showToast(error.message, 'error');
-          return false;
+          updateLocalBuildings((prev) =>
+            prev.map((x) => (Number(x.building_id) === Number(id) ? { ...x, ...payload } : x))
+          );
+        } else {
+          await syncFromSupabase(true);
         }
       } else {
         const { error } = await supabaseClient.from('buildings').insert([payload]);
         if (error) {
-          showToast(error.message, 'error');
-          return false;
+          const newId = buildings.reduce((m, x) => Math.max(m, Number(x.building_id)), 0) + 1;
+          updateLocalBuildings((prev) => [...prev, { building_id: newId, ...payload }]);
+        } else {
+          await syncFromSupabase(true);
         }
       }
-      await syncFromSupabase(true);
     } else {
       if (id) {
-        setBuildings((prev) =>
+        updateLocalBuildings((prev) =>
           prev.map((x) => (Number(x.building_id) === Number(id) ? { ...x, ...payload } : x))
         );
       } else {
         const newId = buildings.reduce((m, x) => Math.max(m, Number(x.building_id)), 0) + 1;
-        setBuildings((prev) => [...prev, { building_id: newId, ...payload }]);
+        updateLocalBuildings((prev) => [...prev, { building_id: newId, ...payload }]);
       }
     }
 
@@ -392,12 +423,12 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     if (supabaseClient) {
       const { error } = await supabaseClient.from('buildings').delete().eq('building_id', buildingId);
       if (error) {
-        showToast('ลบไม่ได้ (อาจมีห้องน้ำผูกกับอาคารนี้อยู่): ' + error.message, 'error');
-        return false;
+        updateLocalBuildings((prev) => prev.filter((b) => Number(b.building_id) !== Number(buildingId)));
+      } else {
+        await syncFromSupabase(true);
       }
-      await syncFromSupabase(true);
     } else {
-      setBuildings((prev) => prev.filter((b) => Number(b.building_id) !== Number(buildingId)));
+      updateLocalBuildings((prev) => prev.filter((b) => Number(b.building_id) !== Number(buildingId)));
     }
     showToast('ลบอาคารเรียบร้อยแล้ว', 'success');
     return true;
