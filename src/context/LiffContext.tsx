@@ -32,9 +32,9 @@ interface LiffContextValue {
 // Default coordinates: Thammasat University (Tha Prachan Campus — central courtyard)
 export const THA_PRACHAN_DEFAULT_COORDS: UserCoordinates = {
   lat: 13.7563,
-  lng: 100.49,
+  lng: 100.4914,
   source: 'campus_default',
-  label: 'มธ. ท่าพระจันทร์ (จุดเริ่มต้นจำลอง)',
+  label: 'มธ. ท่าพระจันทร์ (จุดเริ่มต้น)',
 };
 
 const LiffContext = createContext<LiffContextValue | undefined>(undefined);
@@ -148,7 +148,10 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const requestGpsLocation = useCallback(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) return;
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setCoords(THA_PRACHAN_DEFAULT_COORDS);
+      return;
+    }
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -160,12 +163,13 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
         });
         setIsLocating(false);
       },
-      () => {
-        // Fallback to Thammasat Tha Prachan if GPS denied or unavailable
+      (err) => {
+        // Fallback silently to Thammasat Tha Prachan if GPS denied or unavailable
+        console.warn('Geolocation warning (falling back to Thammasat center):', err?.message);
         setCoords(THA_PRACHAN_DEFAULT_COORDS);
         setIsLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
     );
   }, []);
 

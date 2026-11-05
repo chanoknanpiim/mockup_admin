@@ -28,13 +28,32 @@ const FILTER_OPTIONS: { key: FilterKey; label: string }[] = [
 ];
 
 const CAMPUS_PRESET_POINTS = [
-  { label: 'กลาง มธ. ท่าพระจันทร์', lat: 13.7563, lng: 100.49 },
+  { label: 'กลาง มธ. ท่าพระจันทร์', lat: 13.7563, lng: 100.4914 },
   { label: 'ลานโพธิ์ / พาณิชย์ฯ', lat: 13.7573, lng: 100.49 },
   { label: 'ริมน้ำ คณะเศรษฐศาสตร์', lat: 13.7578, lng: 100.4892 },
   { label: 'ฝั่งรัฐศาสตร์ / PBIC', lat: 13.7556, lng: 100.4914 },
 ];
 
 const EXPANDING_RADII = [300, 500, 1000, 3000] as const;
+
+function calculateHaversineDistanceM(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
 
 function buildFilterPayload(filter: FilterKey): Record<string, unknown> {
   switch (filter) {
@@ -90,6 +109,82 @@ export default function LiffMapPage() {
     setErrorMessage(null);
     const filtersJson = buildFilterPayload(activeFilter);
 
+    const fetchFallback = async (): Promise<NearbyToiletItem[]> => {
+      try {
+        const { data: rawRows, error: fallbackError } = await supabase
+          .from('toilets')
+          .select(
+            `
+            toilet_id,
+            name,
+            description,
+            building_id,
+            floor,
+            location_lat,
+            location_lng,
+            location_text,
+            toilet_type,
+            status,
+            has_bidet,
+            has_disabled_access,
+            facilities,
+            open_hours,
+            avg_rating,
+            buildings (building_name)
+          `
+          )
+          .eq('status', 'ใช้งานได้');
+
+        if (fallbackError || !Array.isArray(rawRows)) {
+          console.warn('Fallback toilets query error:', fallbackError);
+          return [];
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let mapped: NearbyToiletItem[] = rawRows.map((row: any) => {
+          const lat = Number(row.location_lat || 13.7563);
+          const lng = Number(row.location_lng || 100.4914);
+          const dist = calculateHaversineDistanceM(coords.lat, coords.lng, lat, lng);
+          const buildingName = row.buildings?.building_name || 'มธ. ท่าพระจันทร์';
+          return {
+            toilet_id: Number(row.toilet_id),
+            name: row.name || row.location_text || `ห้องน้ำ #${row.toilet_id}`,
+            description: row.description,
+            building_id: row.building_id,
+            building_name: buildingName,
+            floor: row.floor,
+            location_lat: lat,
+            location_lng: lng,
+            location_text: row.location_text,
+            toilet_type: row.toilet_type,
+            status: row.status || 'ใช้งานได้',
+            has_bidet: row.has_bidet,
+            has_disabled_access: row.has_disabled_access,
+            facilities: row.facilities || [],
+            avg_rating: row.avg_rating,
+            review_count: 0,
+            distance_m: dist,
+          };
+        });
+
+        if (activeFilter === 'has_disabled_access') {
+          mapped = mapped.filter((t) => t.has_disabled_access === true);
+        } else if (activeFilter === 'has_bidet') {
+          mapped = mapped.filter((t) => t.has_bidet === true);
+        } else if (activeFilter === 'sanitary') {
+          mapped = mapped.filter(
+            (t) => Array.isArray(t.facilities) && t.facilities.includes('ผ้าอนามัย')
+          );
+        }
+
+        mapped.sort((a, b) => a.distance_m - b.distance_m);
+        return mapped;
+      } catch (err) {
+        console.warn('Fallback toilets execution failed:', err);
+        return [];
+      }
+    };
+
     try {
       if (selectedRadius === 'auto') {
         let found: NearbyToiletItem[] = [];
@@ -102,20 +197,29 @@ export default function LiffMapPage() {
             limit_n: 30,
             filters: filtersJson,
           });
-          if (error) throw error;
-          if (Array.isArray(data) && data.length > 0) {
+          if (!error && Array.isArray(data) && data.length > 0) {
             found = data as NearbyToiletItem[];
             finalRadius = r;
             break;
           }
           finalRadius = r;
         }
+
+        // If RPC found 0 toilets (e.g. user is testing outside Thammasat > 3km), use direct table fallback
+        if (found.length === 0) {
+          const fallbackData = await fetchFallback();
+          if (fallbackData.length > 0) {
+            found = fallbackData;
+          }
+        }
+
         setToilets(found);
         setUsedRadiusM(finalRadius);
         const matched = requestedToiletId
           ? found.find((t) => Number(t.toilet_id) === requestedToiletId)
           : null;
         setSelectedToilet(matched || found[0] || null);
+        setErrorMessage(null);
       } else {
         const { data, error } = await supabase.rpc('nearby_toilets', {
           lat: coords.lat,
@@ -124,18 +228,38 @@ export default function LiffMapPage() {
           limit_n: 30,
           filters: filtersJson,
         });
-        if (error) throw error;
-        const rows = (data || []) as NearbyToiletItem[];
+
+        let rows = (!error && Array.isArray(data) ? data : []) as NearbyToiletItem[];
+        if (rows.length === 0) {
+          const fallbackData = await fetchFallback();
+          if (fallbackData.length > 0) {
+            rows = fallbackData;
+          }
+        }
+
         setToilets(rows);
         setUsedRadiusM(selectedRadius);
         const matched = requestedToiletId
           ? rows.find((t) => Number(t.toilet_id) === requestedToiletId)
           : null;
         setSelectedToilet(matched || rows[0] || null);
+        setErrorMessage(null);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลห้องน้ำใกล้ตัวได้';
-      setErrorMessage(msg);
+      console.warn('nearby_toilets RPC failed, running fallback query:', err);
+      const fallbackData = await fetchFallback();
+      if (fallbackData.length > 0) {
+        setToilets(fallbackData);
+        const matched = requestedToiletId
+          ? fallbackData.find((t) => Number(t.toilet_id) === requestedToiletId)
+          : null;
+        setSelectedToilet(matched || fallbackData[0] || null);
+        setErrorMessage(null);
+      } else {
+        const msg = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลห้องน้ำใกล้ตัวได้';
+        console.warn(msg);
+        setErrorMessage(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -352,14 +476,16 @@ export default function LiffMapPage() {
         <span style={{ fontSize: '11px', color: subText }}>แตะการ์ดเพื่อดูตำแหน่งบนแผนที่</span>
       </div>
 
-      {errorMessage && (
+      {errorMessage && toilets.length === 0 && (
         <div
           style={{
-            backgroundColor: '#FEE2E2',
-            color: '#991B1B',
-            padding: '12px',
+            backgroundColor: isDarkMode ? '#1E293B' : '#F1F5F9',
+            color: textPrimary,
+            border: `1px solid ${cardBorder}`,
+            padding: '12px 14px',
             borderRadius: '12px',
-            fontSize: '13px',
+            fontSize: '12px',
+            textAlign: 'center',
           }}
         >
           {errorMessage}
@@ -388,10 +514,10 @@ export default function LiffMapPage() {
           }}
         >
           <div style={{ fontWeight: 700, fontSize: '14px', color: textPrimary }}>
-            ไม่พบห้องน้ำที่ตรงกับตัวกรองในรัศมี {usedRadiusM} ม.
+            ไม่พบห้องน้ำที่ตรงกับตัวกรองที่เลือก
           </div>
           <div style={{ fontSize: '12px', color: subText, marginTop: '4px' }}>
-            ลองเปลี่ยนตัวกรองเป็น &ldquo;ทั้งหมด&rdquo; หรือขยายรัศมีค้นหาด้านบน
+            ลองแตะตัวกรอง &ldquo;ทั้งหมด&rdquo; ด้านบนเพื่อดูห้องน้ำทั้งหมดในมหาวิทยาลัย
           </div>
         </div>
       ) : (
