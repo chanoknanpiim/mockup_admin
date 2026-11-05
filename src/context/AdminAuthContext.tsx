@@ -156,29 +156,83 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAdminProfile]);
 
   const signIn = async (email: string, password: string) => {
+    const cleanEmail = email.trim().toLowerCase();
     const supabase = getBrowserSupabase();
     if (!supabase) {
       return { error: 'ไม่สามารถเชื่อมต่อ Supabase ได้ กรุณาตรวจสอบการตั้งค่า' };
     }
 
     try {
+      console.log('[AdminAuth] Starting signInWithPassword for:', cleanEmail);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
 
       if (error) {
+        console.error('[AdminAuth] signInWithPassword error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+
+        if (error.message.includes('Invalid login credentials')) {
+          return { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง (Invalid login credentials)' };
+        }
+        if (error.message.includes('Email not confirmed')) {
+          return { error: 'อีเมลนี้ยังไม่ได้รับการยืนยันในระบบ Supabase (Email not confirmed)' };
+        }
         return { error: error.message };
       }
 
-      if (data.user) {
-        setUser(data.user);
-        setSession(data.session);
-        await checkAdminProfile(data.user);
+      if (!data.user) {
+        return { error: 'ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ' };
       }
 
+      console.log('[AdminAuth] Sign-in authenticated by Supabase. Checking admin_profiles for:', cleanEmail);
+
+      // Verify role in admin_profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('admin_profiles')
+        .select('*')
+        .eq('email', cleanEmail)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      console.log('[AdminAuth] admin_profiles response:', { profile, profileError });
+
+      if (profileError) {
+        console.error('[AdminAuth] admin_profiles query error:', profileError);
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setAdminProfile(null);
+        setIsAdmin(false);
+        return { error: `ไม่สามารถตรวจสอบสิทธิ์ผู้ดูแลได้ (${profileError.message})` };
+      }
+
+      const role = profile?.role;
+      const isAuthorized = profile?.is_active && (role === 'admin' || role === 'super_admin' || role === 'moderator');
+
+      if (!profile || !isAuthorized) {
+        console.warn('[AdminAuth] User is not authorized in admin_profiles:', cleanEmail, profile);
+        // Clear unauthorized session immediately
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        setAdminProfile(null);
+        setIsAdmin(false);
+        return { error: 'บัญชีนี้ไม่มีสิทธิ์เข้าถึงระบบผู้ดูแล (Unauthorized)' };
+      }
+
+      setUser(data.user);
+      setSession(data.session);
+      setAdminProfile(profile as AdminProfile);
+      setIsAdmin(true);
+      setAuthError(null);
       return { error: null };
     } catch (err: unknown) {
+      console.error('[AdminAuth] Sign-in unexpected exception:', err);
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
       return { error: msg };
     }

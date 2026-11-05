@@ -40,7 +40,8 @@ export default function LoginPage() {
     }
     setErrorMsg('');
 
-    if (!email.trim() || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
       setErrorMsg('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน');
       return;
     }
@@ -50,24 +51,58 @@ export default function LoginPage() {
       let res: { error: string | null } | null = null;
 
       if (authContext?.signIn) {
-        res = await authContext.signIn(email.trim(), password);
+        res = await authContext.signIn(cleanEmail, password);
       } else {
-        // Fallback: Direct Supabase client sign-in
+        // Fallback: Direct Supabase client sign-in with admin profile verification
         const supabase = getBrowserSupabase();
         if (!supabase) {
           setErrorMsg('ไม่สามารถเชื่อมต่อระบบฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
           setSubmitting(false);
           return;
         }
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
           password,
         });
-        res = error ? { error: error.message } : { error: null };
+
+        if (error) {
+          console.error('[LoginPage fallback] signIn error:', {
+            message: error.message,
+            status: error.status,
+            name: error.name,
+          });
+          if (error.message.includes('Invalid login credentials')) {
+            res = { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง (Invalid login credentials)' };
+          } else if (error.message.includes('Email not confirmed')) {
+            res = { error: 'อีเมลนี้ยังไม่ได้รับการยืนยันในระบบ Supabase (Email not confirmed)' };
+          } else {
+            res = { error: error.message };
+          }
+        } else if (data.user) {
+          // Check role in admin_profiles
+          const { data: profile, error: pError } = await supabase
+            .from('admin_profiles')
+            .select('*')
+            .eq('email', cleanEmail)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          const role = profile?.role;
+          const isAuthorized = profile?.is_active && (role === 'admin' || role === 'super_admin' || role === 'moderator');
+
+          if (pError || !profile || !isAuthorized) {
+            console.warn('[LoginPage fallback] Unauthorized user:', cleanEmail, profile);
+            await supabase.auth.signOut();
+            res = { error: 'บัญชีนี้ไม่มีสิทธิ์เข้าถึงระบบผู้ดูแล (Unauthorized)' };
+          } else {
+            res = { error: null };
+          }
+        }
       }
 
       if (res?.error) {
-        setErrorMsg('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+        // Display exact error message from Supabase or role check
+        setErrorMsg(res.error);
       } else {
         // Navigate cleanly to dashboard to reload fresh admin state
         if (typeof window !== 'undefined') {
@@ -78,7 +113,8 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       console.error('Login submit error:', err);
-      setErrorMsg('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+      setErrorMsg(msg);
     } finally {
       setSubmitting(false);
     }
@@ -160,9 +196,9 @@ export default function LoginPage() {
           {errorMsg && (
             <div
               style={{
-                backgroundColor: '#FEF2F2',
-                color: '#DC2626',
-                border: '1px solid #FECACA',
+                backgroundColor: errorMsg.includes('Unauthorized') ? '#FFFBEB' : '#FEF2F2',
+                color: errorMsg.includes('Unauthorized') ? '#B45309' : '#DC2626',
+                border: errorMsg.includes('Unauthorized') ? '1px solid #FDE68A' : '1px solid #FECACA',
                 borderRadius: '8px',
                 padding: '12px 14px',
                 fontSize: '13px',
