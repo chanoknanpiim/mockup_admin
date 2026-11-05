@@ -154,13 +154,13 @@ Deno.serve(async (req: Request) => {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
-  const channelSecret = Deno.env.get('LINE_CHANNEL_SECRET') || '';
-  const channelAccessToken = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || '';
+  const channelSecret = Deno.env.get('LINE_CHANNEL_SECRET') || '92f558f9918534d9ad8eef1c511078a7';
+  const channelAccessToken = Deno.env.get('LINE_CHANNEL_ACCESS_TOKEN') || 'YEm1FmH6TAw3gbCsCUkIdsVeowhTtRO1r7IfgQPMKOBPex3b52CYGuUPDJ8n6tGFBkMg1jHapy8/1M+bropNM/qSTSVe8zxfliaIKlvVBZ2Nylu+wRWT0pBzcFTfVwwNdn/bWGOADMNo1Eunx4x00wdB04t89/1O/w1cDnyilFU=';
   const searchLogHmacSecret = Deno.env.get('SEARCH_LOG_HMAC_SECRET') || channelSecret;
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  const appBaseUrl = Deno.env.get('APP_BASE_URL') || Deno.env.get('NEXT_PUBLIC_APP_BASE_URL') || '';
-  const liffId = Deno.env.get('LIFF_ID') || Deno.env.get('NEXT_PUBLIC_LIFF_ID') || '';
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://wotvrvrfpwinvaagwnle.supabase.co';
+  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'sb_publishable_Jw87Rp6PXwOFTW0v2Arlnw_RghodbjG';
+  const appBaseUrl = Deno.env.get('APP_BASE_URL') || Deno.env.get('NEXT_PUBLIC_APP_BASE_URL') || 'https://mockupadmin.vercel.app';
+  const liffId = Deno.env.get('LIFF_ID') || Deno.env.get('NEXT_PUBLIC_LIFF_ID') || '2012397593-ADI98PZS';
 
   const rawBody = await req.text();
   const signature = req.headers.get('x-line-signature');
@@ -217,8 +217,9 @@ Deno.serve(async (req: Request) => {
       await supabaseAdmin.from('search_logs').insert([
         {
           line_user_id: hashedUserId,
-          lat: roundedLat,
-          lng: roundedLng,
+          source: 'line_webhook',
+          search_lat: roundedLat,
+          search_lng: roundedLng,
           radius_m: usedRadiusM,
           results_count: toilets.length,
           filters: {},
@@ -258,16 +259,16 @@ Deno.serve(async (req: Request) => {
       // Look up the user's latest rounded location from `search_logs` (if any)
       const { data: lastLogs } = await supabaseAdmin
         .from('search_logs')
-        .select('lat, lng')
+        .select('search_lat, search_lng')
         .eq('line_user_id', hashedUserId)
         .order('created_at', { ascending: false })
         .limit(1);
 
       const lastLocation = Array.isArray(lastLogs) && lastLogs.length > 0 ? lastLogs[0] : null;
 
-      if (lastLocation && lastLocation.lat && lastLocation.lng) {
-        const lat = Number(lastLocation.lat);
-        const lng = Number(lastLocation.lng);
+      if (lastLocation && lastLocation.search_lat && lastLocation.search_lng) {
+        const lat = Number(lastLocation.search_lat);
+        const lng = Number(lastLocation.search_lng);
         const { toilets, usedRadiusM } = await searchWithExpandingRadius(
           supabaseAdmin,
           lat,
@@ -278,8 +279,9 @@ Deno.serve(async (req: Request) => {
         await supabaseAdmin.from('search_logs').insert([
           {
             line_user_id: hashedUserId,
-            lat: roundCoord3(lat),
-            lng: roundCoord3(lng),
+            source: 'line_webhook',
+            search_lat: roundCoord3(lat),
+            search_lng: roundCoord3(lng),
             radius_m: usedRadiusM,
             results_count: toilets.length,
             filters: filtersJson,
