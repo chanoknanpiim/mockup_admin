@@ -24,6 +24,12 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    const supabase = getBrowserSupabase();
+    console.log('[LoginPage] Target Supabase Client:', supabase ? 'Ready' : 'Not Available');
+    console.log('[LoginPage] Env NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL || '(using project fallback)');
+  }, []);
+
+  useEffect(() => {
     if (authContext && !authContext.isLoading && authContext.user && authContext.isAdmin) {
       if (typeof window !== 'undefined') {
         window.location.href = '/';
