@@ -185,15 +185,23 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const supabase = getBrowserSupabase();
-    if (supabase) {
-      await supabase.auth.signOut();
+    try {
+      const supabase = getBrowserSupabase();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (err) {
+      console.error('SignOut error:', err);
+    } finally {
+      setUser(null);
+      setSession(null);
+      setAdminProfile(null);
+      setIsAdmin(false);
+      setAuthError(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
-    setUser(null);
-    setSession(null);
-    setAdminProfile(null);
-    setIsAdmin(false);
-    setAuthError(null);
   };
 
   const refreshAdminStatus = async () => {

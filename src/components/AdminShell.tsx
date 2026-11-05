@@ -23,6 +23,18 @@ const NAV_ITEMS = [
   { href: '/settings', label: 'ตั้งค่าเชื่อมต่อ Supabase' },
 ];
 
+function isPublicPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const clean = pathname.split('?')[0].split('#')[0];
+  return (
+    clean === '/login' ||
+    clean === '/login/' ||
+    clean.startsWith('/login/') ||
+    clean.startsWith('/liff') ||
+    clean.startsWith('/api')
+  );
+}
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -30,20 +42,27 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const { reports, isConnected, isLoading: isDataLoading, syncFromSupabase, toasts } = useAdminData();
   const { user, isAdmin, isLoading: isAuthLoading, authError, signOut, refreshAdminStatus, adminProfile } = useAdminAuth();
 
+  // If public route or login page, immediately bypass AdminShell and render children
+  if (isPublicPath(pathname)) {
+    return <>{children}</>;
+  }
+
   // If user is completely logged out (no session), redirect to /login
   useEffect(() => {
-    if (pathname?.startsWith('/liff') || pathname?.startsWith('/login')) {
+    if (isPublicPath(pathname)) {
+      return;
+    }
+    if (typeof window !== 'undefined' && isPublicPath(window.location.pathname)) {
       return;
     }
     if (!isAuthLoading && !user) {
-      router.replace('/login');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      } else {
+        router.replace('/login');
+      }
     }
   }, [pathname, user, isAuthLoading, router]);
-
-  // If public route or login page, do not wrap with AdminShell layout
-  if (pathname?.startsWith('/liff') || pathname?.startsWith('/login')) {
-    return <>{children}</>;
-  }
 
   // Loading state while verifying auth session (times out within 4-5s)
   if (isAuthLoading) {
@@ -78,22 +97,36 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     );
   }
 
-  // If completely unauthenticated, show brief redirect text
+  // If completely unauthenticated, show brief redirect text with manual failsafe link
   if (!user) {
     return (
       <div
         style={{
           minHeight: '100vh',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#F8FAFC',
           color: '#64748B',
           fontSize: '13px',
           fontFamily: "'Prompt', 'Noto Sans Thai', sans-serif",
+          gap: '12px',
+          padding: '24px',
         }}
       >
         <span>กำลังนำทางไปยังหน้าเข้าสู่ระบบ...</span>
+        <a
+          href="/login"
+          style={{
+            fontSize: '12px',
+            color: '#000066',
+            fontWeight: 600,
+            textDecoration: 'underline',
+          }}
+        >
+          หากหน้าเว็บไม่เปลี่ยนอัตโนมัติ กดที่นี่เพื่อเข้าสู่ระบบ
+        </a>
       </div>
     );
   }
@@ -200,8 +233,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             <button
               type="button"
               onClick={async () => {
-                await signOut();
-                router.replace('/login');
+                try {
+                  await signOut();
+                } catch (e) {
+                  console.error('SignOut error:', e);
+                }
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/login';
+                } else {
+                  router.replace('/login');
+                }
               }}
               style={{
                 width: '100%',
@@ -227,8 +268,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pageTitle = currentNav?.label || 'ภาพรวมระบบ';
 
   const handleLogout = async () => {
-    await signOut();
-    router.replace('/login');
+    try {
+      await signOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    } else {
+      router.replace('/login');
+    }
   };
 
   const adminEmail = user.email || 'Admin';

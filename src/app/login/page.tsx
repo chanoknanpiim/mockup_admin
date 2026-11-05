@@ -3,12 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/context/AdminAuthContext';
+import { getBrowserSupabase } from '@/lib/supabase';
 
 const FONT_FAMILY = "'Prompt', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, isAdmin, isLoading, signIn } = useAdminAuth();
+
+  // Safe context consumption with fallback to prevent crashes if context is unavailable
+  let authContext: ReturnType<typeof useAdminAuth> | null = null;
+  try {
+    authContext = useAdminAuth();
+  } catch (err) {
+    console.warn('AdminAuthContext not available, using direct fallback:', err);
+  }
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,10 +24,14 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && user && isAdmin) {
-      router.replace('/');
+    if (authContext && !authContext.isLoading && authContext.user && authContext.isAdmin) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.replace('/');
+      }
     }
-  }, [user, isAdmin, isLoading, router]);
+  }, [authContext, router]);
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
     if (e) {
@@ -35,11 +47,34 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      const res = await signIn(email.trim(), password);
+      let res: { error: string | null } | null = null;
+
+      if (authContext?.signIn) {
+        res = await authContext.signIn(email.trim(), password);
+      } else {
+        // Fallback: Direct Supabase client sign-in
+        const supabase = getBrowserSupabase();
+        if (!supabase) {
+          setErrorMsg('ไม่สามารถเชื่อมต่อระบบฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+          setSubmitting(false);
+          return;
+        }
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        res = error ? { error: error.message } : { error: null };
+      }
+
       if (res?.error) {
         setErrorMsg('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       } else {
-        router.replace('/');
+        // Navigate cleanly to dashboard to reload fresh admin state
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        } else {
+          router.replace('/');
+        }
       }
     } catch (err: unknown) {
       console.error('Login submit error:', err);

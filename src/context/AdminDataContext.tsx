@@ -197,6 +197,16 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    // If on public pages like /login or /liff, do not auto-fetch all admin data tables
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname;
+      if (p.startsWith('/login') || p.startsWith('/liff')) {
+        setIsConnected(true);
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const cfg = getSupabaseConfig();
     setSupabaseUrl(cfg.url);
     setSupabaseKey(cfg.key);
