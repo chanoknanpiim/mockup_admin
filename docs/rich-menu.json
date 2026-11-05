@@ -1,0 +1,50 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": true,
+  "name": "PlodPloi Main Rich Menu",
+  "chatBarText": "เมนูหลัก (ปลดปล่อย)",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 833,
+        "height": 1686
+      },
+      "action": {
+        "type": "location",
+        "label": "หาห้องน้ำใกล้ฉัน"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 0,
+        "width": 834,
+        "height": 1686
+      },
+      "action": {
+        "type": "uri",
+        "label": "เปิดแผนที่ LIFF",
+        "uri": "https://liff.line.me/2012397593-ADI98PZS"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 0,
+        "width": 833,
+        "height": 1686
+      },
+      "action": {
+        "type": "postback",
+        "label": "กรองห้องน้ำ",
+        "data": "action=filter&filter=all",
+        "displayText": "กรองห้องน้ำ"
+      }
+    }
+  ]
+}
