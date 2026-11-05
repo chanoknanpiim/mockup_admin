@@ -23,12 +23,14 @@ export interface Toilet {
   toilet_id: number;
   building_id: number;
   floor: number;
+  name?: string | null;
   location_lat?: number | null;
   location_lng?: number | null;
   location_text?: string | null;
   toilet_type?: string | null;
   has_bidet?: boolean | null;
   has_disabled_access?: boolean | null;
+  facilities?: string[] | null;
   status: ToiletStatus | string;
 }
 
@@ -59,6 +61,9 @@ export interface ReportItem {
   status_type: string;
   status_detail?: string | null;
   photo_url?: string | null;
+  line_user_id?: string | null;
+  resolution_status?: string | null;
+  resolved_at?: string | null;
 }
 
 export interface ReviewItem {
@@ -69,3 +74,14 @@ export interface ReviewItem {
   rating: number;
   review_text?: string | null;
 }
+
+export interface ToiletPhoto {
+  photo_id: number;
+  toilet_id: number;
+  user_id?: number | null;
+  photo_url: string;
+  caption?: string | null;
+  is_cover?: boolean | null;
+  created_at?: string | null;
+}
+

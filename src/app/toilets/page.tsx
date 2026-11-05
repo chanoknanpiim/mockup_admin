@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAdminData } from '@/context/AdminDataContext';
 import { Toilet } from '@/lib/types';
 
@@ -10,6 +10,7 @@ export default function ToiletsPage() {
     buildings,
     amenities,
     toiletAmenities,
+    toiletPhotos,
     getBuildingName,
     saveToilet,
     deleteToilet,
@@ -19,6 +20,7 @@ export default function ToiletsPage() {
   const [buildingFilter, setBuildingFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
+  // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formBuildingId, setFormBuildingId] = useState<number>(buildings[0]?.building_id || 1);
@@ -30,7 +32,20 @@ export default function ToiletsPage() {
   const [formStatus, setFormStatus] = useState('ใช้งานได้');
   const [selectedAmenities, setSelectedAmenities] = useState<number[]>([]);
 
+  // Photo State
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>('');
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const openModal = (toilet?: Toilet) => {
+    setSelectedPhotoFile(null);
+    setPhotoPreviewUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
     if (toilet) {
       setEditingId(toilet.toilet_id);
       setFormBuildingId(Number(toilet.building_id));
@@ -45,6 +60,12 @@ export default function ToiletsPage() {
         .filter((ta) => Number(ta.toilet_id) === Number(toilet.toilet_id))
         .map((ta) => Number(ta.amenity_id));
       setSelectedAmenities(linkedIds);
+
+      // Find cover photo
+      const cover = toiletPhotos.find(
+        (p) => Number(p.toilet_id) === Number(toilet.toilet_id) && p.is_cover
+      ) || toiletPhotos.find((p) => Number(p.toilet_id) === Number(toilet.toilet_id));
+      setExistingPhotoUrl(cover ? cover.photo_url : '');
     } else {
       setEditingId(null);
       setFormBuildingId(buildings[0]?.building_id || 1);
@@ -55,8 +76,26 @@ export default function ToiletsPage() {
       setFormType('แยกเพศ');
       setFormStatus('ใช้งานได้');
       setSelectedAmenities([]);
+      setExistingPhotoUrl('');
     }
     setModalOpen(true);
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedPhotoFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setPhotoPreviewUrl(objectUrl);
+  };
+
+  const clearSelectedPhoto = () => {
+    setSelectedPhotoFile(null);
+    setPhotoPreviewUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const toggleAmenity = (amenityId: number) => {
@@ -66,24 +105,38 @@ export default function ToiletsPage() {
   };
 
   const handleSave = async () => {
-    const ok = await saveToilet({
-      id: editingId,
-      building_id: Number(formBuildingId),
-      floor: Number(formFloor),
-      location_text: formLocationText,
-      location_lat: parseFloat(formLat) || 13.7563,
-      location_lng: parseFloat(formLng) || 100.4902,
-      toilet_type: formType,
-      status: formStatus,
-      selectedAmenityIds: selectedAmenities,
-    });
-    if (ok) {
-      setModalOpen(false);
+    if (!formLocationText.trim()) {
+      alert('กรุณาระบุจุดสังเกตหรือคำอธิบายห้องน้ำ');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const ok = await saveToilet({
+        id: editingId,
+        building_id: Number(formBuildingId),
+        floor: Number(formFloor),
+        location_text: formLocationText.trim(),
+        location_lat: parseFloat(formLat) || 13.7563,
+        location_lng: parseFloat(formLng) || 100.4902,
+        toilet_type: formType,
+        status: formStatus,
+        selectedAmenityIds: selectedAmenities,
+        photoFile: selectedPhotoFile,
+      });
+
+      if (ok) {
+        setModalOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (toiletId: number) => {
-    if (!confirm(`ยืนยันการลบห้องน้ำรหัส #${toiletId} ใช่หรือไม่?`)) return;
+    if (!confirm(`ยืนยันการลบห้องน้ำรหัส #${toiletId} ใช่หรือไม่? ข้อมูลพิกัดและสิ่งอำนวยความสะดวกจะถูกลบออกจากระบบทันที`)) {
+      return;
+    }
     await deleteToilet(toiletId);
   };
 
@@ -99,12 +152,17 @@ export default function ToiletsPage() {
 
   return (
     <div className="page-section">
+      {/* Helper Banner */}
       <div className="helper-banner">
         <div>
-          <strong>การจัดการข้อมูลห้องน้ำ (ตาราง toilets และ toilet_amenities)</strong>
-          <p>
-            ใช้สำหรับเพิ่มจุดห้องน้ำใหม่ เปลี่ยนสถานะ (ปกติ/ทำความสะอาด/ชำรุด)
-            และติ๊กเลือกสิ่งอำนวยความสะดวกที่มีในห้องน้ำนั้นๆ
+          <div style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 800, color: '#000066', textTransform: 'uppercase', marginBottom: '4px' }}>
+            PLODPLOI MANAGEMENT
+          </div>
+          <strong style={{ fontSize: '16px', color: '#000066' }}>
+            การจัดการข้อมูลห้องน้ำ มธ. ท่าพระจันทร์ (ตาราง toilets)
+          </strong>
+          <p style={{ margin: '4px 0 0', color: '#64748B', fontSize: '13px' }}>
+            บริหารจัดการจุดบริการห้องน้ำในมหาวิทยาลัย ปรับปรุงพิกัด GPS อัปโหลดรูปภาพจริง และอัปเดตสถานะความพร้อมใช้งาน
           </p>
         </div>
         <button className="btn btn-primary btn-lg" onClick={() => openModal()}>
@@ -112,12 +170,13 @@ export default function ToiletsPage() {
         </button>
       </div>
 
+      {/* Action / Search Bar */}
       <div className="action-bar">
         <div className="search-filter-group">
           <input
             type="text"
             className="form-control"
-            placeholder="พิมพ์ค้นหาชื่ออาคาร หรือจุดสังเกต..."
+            placeholder="ค้นหาชื่ออาคาร หรือจุดสังเกต..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -126,7 +185,7 @@ export default function ToiletsPage() {
             value={buildingFilter}
             onChange={(e) => setBuildingFilter(e.target.value)}
           >
-            <option value="">แสดงทุกอาคาร</option>
+            <option value="">แสดงทุกอาคาร ({buildings.length} อาคาร)</option>
             {buildings.map((b) => (
               <option key={b.building_id} value={b.building_id}>
                 {b.building_name}
@@ -146,24 +205,26 @@ export default function ToiletsPage() {
         </div>
       </div>
 
+      {/* Toilet Data Table */}
       <div className="panel">
         <div className="table-responsive">
           <table className="table">
             <thead>
               <tr>
-                <th>รหัส</th>
+                <th style={{ width: '80px' }}>รูปภาพ</th>
+                <th style={{ width: '70px' }}>รหัส</th>
                 <th>อาคาร และ ชั้น</th>
                 <th>จุดสังเกต / พิกัด</th>
                 <th>ประเภท</th>
                 <th>สิ่งอำนวยความสะดวก</th>
-                <th>สถานะปัจจุบัน</th>
-                <th>ปุ่มจัดการ</th>
+                <th>สถานะ</th>
+                <th style={{ textAlign: 'right' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: '#94A3B8' }}>
                     ไม่พบข้อมูลห้องน้ำตามเงื่อนไขที่เลือก
                   </td>
                 </tr>
@@ -184,45 +245,88 @@ export default function ToiletsPage() {
                     linkedIds.includes(Number(a.amenity_id))
                   );
 
+                  const photoObj = toiletPhotos.find(
+                    (p) => Number(p.toilet_id) === Number(t.toilet_id) && p.is_cover
+                  ) || toiletPhotos.find((p) => Number(p.toilet_id) === Number(t.toilet_id));
+
                   return (
                     <tr key={t.toilet_id}>
                       <td>
-                        <b>#{t.toilet_id}</b>
+                        {photoObj?.photo_url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={photoObj.photo_url}
+                            alt="ห้องน้ำ"
+                            style={{
+                              width: '54px',
+                              height: '42px',
+                              objectFit: 'cover',
+                              borderRadius: '6px',
+                              border: '1px solid #E2E8F0',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '54px',
+                              height: '42px',
+                              borderRadius: '6px',
+                              backgroundColor: '#F1F5F9',
+                              border: '1px solid #E2E8F0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              color: '#94A3B8',
+                              fontWeight: 600,
+                            }}
+                          >
+                            ไม่มีรูป
+                          </div>
+                        )}
                       </td>
                       <td>
-                        <b>{getBuildingName(t.building_id)}</b>
-                        <br />
-                        <span className="text-muted text-sm">ชั้น {t.floor}</span>
+                        <strong style={{ color: '#000066' }}>#{t.toilet_id}</strong>
                       </td>
                       <td>
-                        {t.location_text || '-'}
-                        <br />
-                        <span className="text-muted text-sm">
-                          พิกัด: {t.location_lat ?? '-'}, {t.location_lng ?? '-'}
+                        <div style={{ fontWeight: 700, color: '#1E293B' }}>
+                          {getBuildingName(t.building_id)}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>
+                          ชั้น {t.floor}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '13px', color: '#334155' }}>
+                          {t.location_text || '-'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
+                          GPS: {Number(t.location_lat ?? 0).toFixed(5)}, {Number(t.location_lng ?? 0).toFixed(5)}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '13px', color: '#475569' }}>
+                          {t.toilet_type || 'แยกเพศ'}
                         </span>
                       </td>
-                      <td>{t.toilet_type || 'แยกเพศ'}</td>
                       <td>
-                        {matchedAmenities.length > 0 ? (
-                          matchedAmenities.map((a) => (
-                            <span key={a.amenity_id} className="amenity-tag">
-                              {a.amenity_name}
-                            </span>
-                          ))
-                        ) : t.has_bidet || t.has_disabled_access ? (
-                          <>
-                            {t.has_bidet && <span className="amenity-tag">สายฉีดชำระ</span>}
-                            {t.has_disabled_access && <span className="amenity-tag">ผู้พิการ</span>}
-                          </>
-                        ) : (
-                          <span className="text-muted text-sm">ไม่มีระบุ</span>
-                        )}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {matchedAmenities.length > 0 ? (
+                            matchedAmenities.map((a) => (
+                              <span key={a.amenity_id} className="amenity-tag">
+                                {a.amenity_name}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ fontSize: '12px', color: '#94A3B8' }}>ไม่มีระบุ</span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <span className={`badge ${statusBadge}`}>{t.status}</span>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '6px' }}>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px' }}>
                           <button
                             className="btn btn-sm btn-outline-primary"
                             onClick={() => openModal(t)}
@@ -246,17 +350,30 @@ export default function ToiletsPage() {
         </div>
       </div>
 
-      {/* Modal เพิ่ม/แก้ไข ห้องน้ำ */}
+      {/* Modal เพิ่ม/แก้ไข ข้อมูลห้องน้ำ */}
       {modalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content modal-lg">
+          <div className="modal-content modal-lg" style={{ maxWidth: '640px' }}>
             <div className="modal-header">
-              <h3>{editingId ? `แก้ไขข้อมูลห้องน้ำ #${editingId}` : 'เพิ่มห้องน้ำจุดใหม่'}</h3>
-              <button className="icon-btn close-modal-btn" onClick={() => setModalOpen(false)}>
+              <div>
+                <div style={{ fontSize: '11px', letterSpacing: '2px', fontWeight: 800, color: '#000066', textTransform: 'uppercase' }}>
+                  PLODPLOI
+                </div>
+                <h3 style={{ margin: '2px 0 0', color: '#000066' }}>
+                  {editingId ? `แก้ไขข้อมูลห้องน้ำ #${editingId}` : 'เพิ่มห้องน้ำจุดใหม่'}
+                </h3>
+              </div>
+              <button
+                className="icon-btn close-modal-btn"
+                onClick={() => setModalOpen(false)}
+                aria-label="ปิดหน้าต่าง"
+              >
                 X
               </button>
             </div>
-            <div className="modal-body">
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Row 1: อาคาร และ ชั้น */}
               <div className="form-row">
                 <div className="form-group half">
                   <label>
@@ -276,7 +393,7 @@ export default function ToiletsPage() {
                 </div>
                 <div className="form-group half">
                   <label>
-                    ชั้นที่ตั้ง (ใส่เป็นตัวเลข เช่น 1, 2, 3) <span className="text-danger">*</span>
+                    ชั้นที่ตั้ง (ใส่ตัวเลข เช่น 1, 2, 3) <span className="text-danger">*</span>
                   </label>
                   <input
                     type="number"
@@ -287,19 +404,21 @@ export default function ToiletsPage() {
                 </div>
               </div>
 
+              {/* Row 2: จุดสังเกต */}
               <div className="form-group">
                 <label>
-                  คำอธิบายจุดสังเกต (ช่วยให้หาเจอง่ายขึ้น) <span className="text-danger">*</span>
+                  จุดสังเกต / รายละเอียดตำแหน่ง <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="เช่น อยู่ติดกับลิฟต์ฝั่งทิศเหนือ ด้านหลังบันไดหลัก"
+                  placeholder="เช่น ติดกับบันไดหลักฝั่งทิศเหนือ ตรงข้ามห้อง CITU 404"
                   value={formLocationText}
                   onChange={(e) => setFormLocationText(e.target.value)}
                 />
               </div>
 
+              {/* Row 3: พิกัด GPS */}
               <div className="form-row">
                 <div className="form-group half">
                   <label>พิกัดละติจูด (Latitude)</label>
@@ -307,6 +426,7 @@ export default function ToiletsPage() {
                     type="number"
                     step="any"
                     className="form-control"
+                    placeholder="13.7563"
                     value={formLat}
                     onChange={(e) => setFormLat(e.target.value)}
                   />
@@ -317,12 +437,14 @@ export default function ToiletsPage() {
                     type="number"
                     step="any"
                     className="form-control"
+                    placeholder="100.4902"
                     value={formLng}
                     onChange={(e) => setFormLng(e.target.value)}
                   />
                 </div>
               </div>
 
+              {/* Row 4: ประเภท และ สถานะ */}
               <div className="form-row">
                 <div className="form-group half">
                   <label>ประเภทห้องน้ำ</label>
@@ -332,7 +454,7 @@ export default function ToiletsPage() {
                     onChange={(e) => setFormType(e.target.value)}
                   >
                     <option value="แยกเพศ">แยกเพศ (ชาย/หญิง)</option>
-                    <option value="รวม">ห้องน้ำรวม (All Gender)</option>
+                    <option value="ห้องน้ำรวม">ห้องน้ำรวม (All Gender)</option>
                   </select>
                 </div>
                 <div className="form-group half">
@@ -349,8 +471,9 @@ export default function ToiletsPage() {
                 </div>
               </div>
 
+              {/* Row 5: สิ่งอำนวยความสะดวก */}
               <div className="form-group">
-                <label>สิ่งอำนวยความสะดวกหลัก (ติ๊กเลือกได้มากกว่า 1 ข้อ)</label>
+                <label>สิ่งอำนวยความสะดวก (ติ๊กเลือกข้อที่ให้บริการ)</label>
                 <div className="checkbox-grid">
                   {amenities.map((a) => (
                     <label key={a.amenity_id} className="checkbox-container">
@@ -364,13 +487,105 @@ export default function ToiletsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Row 6: อัปโหลดรูปภาพห้องน้ำจริง */}
+              <div className="form-group">
+                <label>อัปโหลดรูปภาพห้องน้ำ (บันทึกลง Supabase Storage: toilet-photos)</label>
+                <div
+                  style={{
+                    border: '1px dashed #CBD5E1',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    backgroundColor: '#F8FAFC',
+                    textAlign: 'center',
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    style={{ display: 'none' }}
+                    id="toilet-photo-upload"
+                  />
+
+                  {photoPreviewUrl ? (
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photoPreviewUrl}
+                        alt="รูปตัวอย่างที่จะอัปโหลด"
+                        style={{
+                          maxHeight: '140px',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                          marginBottom: '8px',
+                          border: '1px solid #E2E8F0',
+                        }}
+                      />
+                      <div>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={clearSelectedPhoto}
+                        >
+                          ยกเลิกรูปที่เลือก
+                        </button>
+                      </div>
+                    </div>
+                  ) : existingPhotoUrl ? (
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={existingPhotoUrl}
+                        alt="รูปภาพปัจจุบัน"
+                        style={{
+                          maxHeight: '140px',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                          marginBottom: '8px',
+                          border: '1px solid #E2E8F0',
+                        }}
+                      />
+                      <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '8px' }}>
+                        รูปภาพปัจจุบันในระบบ
+                      </div>
+                      <label htmlFor="toilet-photo-upload" className="btn btn-sm btn-outline-primary" style={{ cursor: 'pointer' }}>
+                        เปลี่ยนรูปภาพใหม่
+                      </label>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
+                        ยังไม่มีรูปภาพสำหรับจุดห้องน้ำนี้
+                      </div>
+                      <label
+                        htmlFor="toilet-photo-upload"
+                        className="btn btn-sm btn-outline-primary"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        เลือกรูปภาพจากเครื่อง
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+
             <div className="modal-footer">
-              <button className="btn btn-outline" onClick={() => setModalOpen(false)}>
+              <button
+                className="btn btn-outline"
+                disabled={isSubmitting}
+                onClick={() => setModalOpen(false)}
+              >
                 ยกเลิก
               </button>
-              <button className="btn btn-primary btn-lg" onClick={handleSave}>
-                บันทึกข้อมูลห้องน้ำ
+              <button
+                className="btn btn-primary btn-lg"
+                disabled={isSubmitting}
+                onClick={handleSave}
+              >
+                {isSubmitting ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลห้องน้ำ'}
               </button>
             </div>
           </div>

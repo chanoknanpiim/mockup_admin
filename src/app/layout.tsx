@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AdminAuthProvider } from '@/context/AdminAuthContext';
 import { AdminDataProvider } from '@/context/AdminDataContext';
 import AdminShell from '@/components/AdminShell';
 
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body>
-        <AdminDataProvider>
-          <AdminShell>{children}</AdminShell>
-        </AdminDataProvider>
+        <AdminAuthProvider>
+          <AdminDataProvider>
+            <AdminShell>{children}</AdminShell>
+          </AdminDataProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   );

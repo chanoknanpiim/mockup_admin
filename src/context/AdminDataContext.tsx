@@ -12,6 +12,7 @@ import {
   AdminItem,
   ReportItem,
   ReviewItem,
+  ToiletPhoto,
 } from '@/lib/types';
 import {
   createSupabaseClientInstance,
@@ -37,6 +38,7 @@ interface SaveToiletInput {
   toilet_type: string;
   status: string;
   selectedAmenityIds: number[];
+  photoFile?: File | null;
 }
 
 interface SaveBuildingInput {
@@ -79,6 +81,7 @@ interface AdminDataContextType {
   amenities: Amenity[];
   toilets: Toilet[];
   toiletAmenities: ToiletAmenity[];
+  toiletPhotos: ToiletPhoto[];
   users: UserItem[];
   admins: AdminItem[];
   reports: ReportItem[];
@@ -103,6 +106,7 @@ interface AdminDataContextType {
   deleteAmenity: (amenityId: number) => Promise<boolean>;
   submitNewReport: (input: SubmitReportInput) => Promise<boolean>;
   updateToiletStatus: (toiletId: number, newStatus: string) => Promise<boolean>;
+  updateReportResolution: (reportId: number, resolutionStatus: string, newToiletStatus?: string, toiletId?: number) => Promise<boolean>;
   deleteReport: (reportId: number) => Promise<boolean>;
   deleteReview: (reviewId: string | number) => Promise<boolean>;
   saveUser: (input: SaveUserInput) => Promise<boolean>;
@@ -128,6 +132,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [toilets, setToilets] = useState<Toilet[]>([]);
   const [toiletAmenities, setToiletAmenities] = useState<ToiletAmenity[]>([]);
+  const [toiletPhotos, setToiletPhotos] = useState<ToiletPhoto[]>([]);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [admins, setAdmins] = useState<AdminItem[]>([]);
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -153,12 +158,13 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
 
       setIsLoading(true);
       try {
-        const [bRes, lRes, aRes, tRes, taRes, rRes, revRes, uRes, admRes] = await Promise.all([
+        const [bRes, lRes, aRes, tRes, taRes, tpRes, rRes, revRes, uRes, admRes] = await Promise.all([
           client.from('buildings').select('*').order('building_id'),
           client.from('locations').select('*').order('location_id'),
           client.from('amenities').select('*').order('amenity_id'),
           client.from('toilets').select('*').order('toilet_id'),
           client.from('toilet_amenities').select('*'),
+          client.from('toilet_photos').select('*').order('photo_id'),
           client.from('reports').select('*').order('created_at', { ascending: false }),
           client.from('reviews').select('*').order('created_at', { ascending: false }),
           client.from('Users').select('*').order('user_id'),
@@ -170,6 +176,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         if (!aRes.error && aRes.data) setAmenities(aRes.data);
         if (!tRes.error && tRes.data) setToilets(tRes.data);
         if (!taRes.error && taRes.data) setToiletAmenities(taRes.data);
+        if (!tpRes.error && tpRes.data) setToiletPhotos(tpRes.data);
         if (!rRes.error && rRes.data) setReports(rRes.data);
         if (!revRes.error && revRes.data) setReviews(revRes.data);
         if (!uRes.error && uRes.data) setUsers(uRes.data);
@@ -258,8 +265,14 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     );
     const has_bidet = selectedAmenities.some((a) => a.amenity_name.includes('สายฉีด'));
     const has_disabled_access = selectedAmenities.some((a) => a.amenity_name.includes('พิการ'));
+    const facilities = selectedAmenities.map((a) => a.amenity_name);
 
-    const payload = {
+    const existingToilet = id
+      ? toilets.find((t) => Number(t.toilet_id) === Number(id))
+      : undefined;
+    const shouldSetName = !existingToilet?.name || !existingToilet.name.trim();
+
+    const payload: Record<string, unknown> = {
       building_id,
       floor,
       location_text: location_text.trim(),
@@ -269,6 +282,8 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       status,
       has_bidet,
       has_disabled_access,
+      facilities,
+      ...(shouldSetName ? { name: location_text.trim() } : {}),
     };
 
     let savedToiletId = id ? Number(id) : 0;
@@ -297,6 +312,39 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         }));
         await supabaseClient.from('toilet_amenities').insert(taRows);
       }
+
+      // Handle photo upload if a file was selected
+      if (input.photoFile) {
+        try {
+          const file = input.photoFile;
+          const ext = file.name.split('.').pop() || 'jpg';
+          const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '_');
+          const filePath = `toilet_${savedToiletId}_${Date.now()}_${cleanName}.${ext}`;
+
+          const { error: uploadError } = await supabaseClient.storage
+            .from('toilet-photos')
+            .upload(filePath, file, { contentType: file.type, upsert: true });
+
+          if (!uploadError) {
+            const { data: pubData } = supabaseClient.storage
+              .from('toilet-photos')
+              .getPublicUrl(filePath);
+
+            if (pubData?.publicUrl) {
+              await supabaseClient.from('toilet_photos').insert({
+                toilet_id: savedToiletId,
+                photo_url: pubData.publicUrl,
+                is_cover: true,
+              });
+            }
+          } else {
+            console.error('Storage upload error:', uploadError);
+            showToast('อัปโหลดรูปภาพไม่สำเร็จ: ' + uploadError.message, 'error');
+          }
+        } catch (uploadEx) {
+          console.error('Photo upload exception:', uploadEx);
+        }
+      }
     }
 
     await syncFromSupabase(true);
@@ -307,6 +355,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const deleteToilet = async (toiletId: number): Promise<boolean> => {
     if (!supabaseClient) return false;
     await supabaseClient.from('toilet_amenities').delete().eq('toilet_id', toiletId);
+    await supabaseClient.from('toilet_photos').delete().eq('toilet_id', toiletId);
     const { error } = await supabaseClient.from('toilets').delete().eq('toilet_id', toiletId);
     if (error) {
       showToast('ลบไม่สำเร็จ: ' + error.message, 'error');
@@ -536,6 +585,39 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  const updateReportResolution = async (
+    reportId: number,
+    resolutionStatus: string,
+    newToiletStatus?: string,
+    toiletId?: number
+  ): Promise<boolean> => {
+    if (!supabaseClient) return false;
+    const payload: Record<string, unknown> = {
+      resolution_status: resolutionStatus,
+      ...(resolutionStatus === 'resolved' ? { resolved_at: new Date().toISOString() } : {}),
+    };
+    const { error: repErr } = await supabaseClient
+      .from('reports')
+      .update(payload)
+      .eq('report_id', reportId);
+
+    if (repErr) {
+      showToast('อัปเดตสถานะแจ้งซ่อมไม่สำเร็จ: ' + repErr.message, 'error');
+      return false;
+    }
+
+    if (newToiletStatus && toiletId) {
+      await supabaseClient
+        .from('toilets')
+        .update({ status: newToiletStatus })
+        .eq('toilet_id', toiletId);
+    }
+
+    await syncFromSupabase(true);
+    showToast('อัปเดตสถานะการดำเนินงานเรียบร้อยแล้ว', 'success');
+    return true;
+  };
+
   const deleteReport = async (reportId: number): Promise<boolean> => {
     if (!supabaseClient) return false;
     const { error } = await supabaseClient.from('reports').delete().eq('report_id', reportId);
@@ -662,6 +744,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         amenities,
         toilets,
         toiletAmenities,
+        toiletPhotos,
         users,
         admins,
         reports,
@@ -686,6 +769,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         deleteAmenity,
         submitNewReport,
         updateToiletStatus,
+        updateReportResolution,
         deleteReport,
         deleteReview,
         saveUser,

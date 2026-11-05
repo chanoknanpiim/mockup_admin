@@ -1,0 +1,543 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "horizontal",
+        "backgroundColor": "#000066",
+        "paddingAll": "18px",
+        "paddingStart": "22px",
+        "paddingEnd": "22px",
+        "alignItems": "center",
+        "contents": [
+          {
+            "type": "text",
+            "text": "PLODPLOI",
+            "color": "#FFFFFF",
+            "size": "sm",
+            "weight": "bold",
+            "flex": 1
+          },
+          {
+            "type": "text",
+            "text": "เปิด",
+            "color": "#C7D2FE",
+            "size": "xs",
+            "weight": "bold",
+            "align": "end",
+            "flex": 0
+          }
+        ]
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#FFFFFF",
+        "paddingAll": "22px",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ห้องน้ำใกล้คุณ ลำดับที่ 1",
+            "size": "xs",
+            "color": "#64748B",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "วิทยาลัยนวัตกรรม F4",
+            "size": "xl",
+            "weight": "bold",
+            "color": "#000066",
+            "wrap": true,
+            "maxLines": 2,
+            "margin": "xs"
+          },
+          {
+            "type": "text",
+            "text": "ห่าง 16 ม.",
+            "size": "xxl",
+            "weight": "bold",
+            "color": "#000066",
+            "margin": "sm"
+          },
+          {
+            "type": "text",
+            "text": "ข้างห้องเรียน CITU 404 และ Common Room",
+            "size": "xs",
+            "color": "#64748B",
+            "wrap": true,
+            "margin": "xs"
+          },
+          {
+            "type": "separator",
+            "margin": "lg",
+            "color": "#E2E8F0"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "lg",
+            "spacing": "md",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "alignItems": "center",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "คะแนน",
+                    "size": "sm",
+                    "color": "#64748B",
+                    "flex": 4
+                  },
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "align": "end",
+                    "flex": 6,
+                    "contents": [
+                      {
+                        "type": "span",
+                        "text": "★ ",
+                        "color": "#FFD700",
+                        "weight": "bold"
+                      },
+                      {
+                        "type": "span",
+                        "text": "5.0 (0 รีวิว)",
+                        "color": "#0F172A",
+                        "weight": "bold"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "separator",
+                "color": "#E2E8F0"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "alignItems": "flex-start",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "ห้องน้ำผู้พิการ",
+                    "size": "sm",
+                    "color": "#64748B",
+                    "flex": 5
+                  },
+                  {
+                    "type": "text",
+                    "text": "ไม่มีให้บริการ",
+                    "size": "sm",
+                    "color": "#0F172A",
+                    "weight": "bold",
+                    "align": "end",
+                    "wrap": true,
+                    "flex": 7
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "margin": "lg",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "backgroundColor": "#F1F5F9",
+                "cornerRadius": "4px",
+                "paddingAll": "4px",
+                "paddingStart": "8px",
+                "paddingEnd": "8px",
+                "flex": 0,
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "ข้อมูลทดสอบ",
+                    "size": "xs",
+                    "color": "#64748B"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#FFFFFF",
+        "paddingAll": "20px",
+        "paddingTop": "4px",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#000066",
+            "cornerRadius": "8px",
+            "paddingAll": "12px",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "action": {
+              "type": "uri",
+              "label": "นำทาง",
+              "uri": "https://www.google.com/maps/dir/?api=1&destination=13.7562,100.4901&travelmode=walking"
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "นำทาง",
+                "color": "#FFFFFF",
+                "size": "sm",
+                "weight": "bold",
+                "align": "center"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#000066",
+            "borderWidth": "1px",
+            "cornerRadius": "8px",
+            "paddingAll": "12px",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "action": {
+              "type": "uri",
+              "label": "ดูรายละเอียด / รีวิว",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID?toilet_id=1"
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "ดูรายละเอียด / รีวิว",
+                "color": "#000066",
+                "size": "sm",
+                "weight": "bold",
+                "align": "center"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "horizontal",
+        "backgroundColor": "#000066",
+        "paddingAll": "18px",
+        "paddingStart": "22px",
+        "paddingEnd": "22px",
+        "alignItems": "center",
+        "contents": [
+          {
+            "type": "text",
+            "text": "PLODPLOI",
+            "color": "#FFFFFF",
+            "size": "sm",
+            "weight": "bold",
+            "flex": 1
+          },
+          {
+            "type": "text",
+            "text": "เปิด",
+            "color": "#C7D2FE",
+            "size": "xs",
+            "weight": "bold",
+            "align": "end",
+            "flex": 0
+          }
+        ]
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#FFFFFF",
+        "paddingAll": "22px",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ห้องน้ำใกล้คุณ ลำดับที่ 2",
+            "size": "xs",
+            "color": "#64748B",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "วิทยาลัยนวัตกรรม F5",
+            "size": "xl",
+            "weight": "bold",
+            "color": "#000066",
+            "wrap": true,
+            "maxLines": 2,
+            "margin": "xs"
+          },
+          {
+            "type": "text",
+            "text": "ห่าง 22 ม.",
+            "size": "xxl",
+            "weight": "bold",
+            "color": "#000066",
+            "margin": "sm"
+          },
+          {
+            "type": "text",
+            "text": "ใกล้ห้องเรียน CITU 501 - 510",
+            "size": "xs",
+            "color": "#64748B",
+            "wrap": true,
+            "margin": "xs"
+          },
+          {
+            "type": "separator",
+            "margin": "lg",
+            "color": "#E2E8F0"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "lg",
+            "spacing": "md",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "alignItems": "center",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "คะแนน",
+                    "size": "sm",
+                    "color": "#64748B",
+                    "flex": 4
+                  },
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "align": "end",
+                    "flex": 6,
+                    "contents": [
+                      {
+                        "type": "span",
+                        "text": "★ ",
+                        "color": "#FFD700",
+                        "weight": "bold"
+                      },
+                      {
+                        "type": "span",
+                        "text": "5.0 (2 รีวิว)",
+                        "color": "#0F172A",
+                        "weight": "bold"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "separator",
+                "color": "#E2E8F0"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "alignItems": "flex-start",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "ห้องน้ำผู้พิการ",
+                    "size": "sm",
+                    "color": "#64748B",
+                    "flex": 5
+                  },
+                  {
+                    "type": "text",
+                    "text": "มีให้บริการ",
+                    "size": "sm",
+                    "color": "#0F172A",
+                    "weight": "bold",
+                    "align": "end",
+                    "wrap": true,
+                    "flex": 7
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#FFFFFF",
+        "paddingAll": "20px",
+        "paddingTop": "4px",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#000066",
+            "cornerRadius": "8px",
+            "paddingAll": "12px",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "action": {
+              "type": "uri",
+              "label": "นำทาง",
+              "uri": "https://www.google.com/maps/dir/?api=1&destination=13.7561,100.4901&travelmode=walking"
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "นำทาง",
+                "color": "#FFFFFF",
+                "size": "sm",
+                "weight": "bold",
+                "align": "center"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#000066",
+            "borderWidth": "1px",
+            "cornerRadius": "8px",
+            "paddingAll": "12px",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "action": {
+              "type": "uri",
+              "label": "ดูรายละเอียด / รีวิว",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID?toilet_id=2"
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "ดูรายละเอียด / รีวิว",
+                "color": "#000066",
+                "size": "sm",
+                "weight": "bold",
+                "align": "center"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "horizontal",
+        "backgroundColor": "#000066",
+        "paddingAll": "18px",
+        "paddingStart": "22px",
+        "paddingEnd": "22px",
+        "alignItems": "center",
+        "contents": [
+          {
+            "type": "text",
+            "text": "PLODPLOI",
+            "color": "#FFFFFF",
+            "size": "sm",
+            "weight": "bold",
+            "flex": 1
+          },
+          {
+            "type": "text",
+            "text": "MAP VIEW",
+            "color": "#C7D2FE",
+            "size": "xs",
+            "weight": "bold",
+            "align": "end",
+            "flex": 0
+          }
+        ]
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#000066",
+        "paddingAll": "24px",
+        "justifyContent": "center",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ค้นหาเพิ่มเติม",
+            "size": "xs",
+            "color": "#C7D2FE",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "ดูทั้งหมดบนแผนที่",
+            "size": "xxl",
+            "weight": "bold",
+            "color": "#FFFFFF",
+            "wrap": true
+          },
+          {
+            "type": "text",
+            "text": "พบห้องน้ำใกล้คุณ 27 แห่งในรัศมี 300 เมตร",
+            "size": "sm",
+            "color": "#C7D2FE",
+            "wrap": true,
+            "margin": "sm"
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "backgroundColor": "#000066",
+        "paddingAll": "22px",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFFFF",
+            "cornerRadius": "8px",
+            "paddingAll": "13px",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "action": {
+              "type": "uri",
+              "label": "แผนที่",
+              "uri": "https://liff.line.me/YOUR_LIFF_ID"
+            },
+            "contents": [
+              {
+                "type": "text",
+                "text": "แผนที่",
+                "color": "#000066",
+                "size": "sm",
+                "weight": "bold",
+                "align": "center"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
