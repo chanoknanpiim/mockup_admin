@@ -21,6 +21,25 @@ export const THA_PRACHAN_CENTER = {
   label: 'มธ. ท่าพระจันทร์',
 };
 
+export function calculateHaversineM(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
 function toBase64(bytes: Uint8Array): string {
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -212,21 +231,73 @@ Deno.serve(async (req: Request) => {
       continue;
     }
 
-    // 2. Location Message Event -> Expanding search 300m -> 500m -> 1000m -> 3000m
+    // 2. Location Message Event -> Limit search to within 1,000m of Thammasat Tha Prachan campus
     if (event.type === 'message' && event.message?.type === 'location' && replyToken) {
       const lat = Number(event.message.latitude);
       const lng = Number(event.message.longitude);
+      const distFromCampus = calculateHaversineM(
+        lat,
+        lng,
+        THA_PRACHAN_CENTER.lat,
+        THA_PRACHAN_CENTER.lng
+      );
 
-      let { toilets, usedRadiusM } = await searchWithExpandingRadius(
+      const roundedLat = roundCoord3(lat);
+      const roundedLng = roundCoord3(lng);
+
+      // If user's distance is greater than 1,000 meters from Thammasat center
+      if (distFromCampus > 1000) {
+        await supabaseAdmin.from('search_logs').insert([
+          {
+            line_user_id: hashedUserId,
+            source: 'line_webhook',
+            search_lat: roundedLat,
+            search_lng: roundedLng,
+            radius_m: 1000,
+            results_count: 0,
+            filters: {},
+          },
+        ]);
+
+        await replyToLine(
+          replyToken,
+          [
+            {
+              type: 'text',
+              text: 'ขออภัยครับ ขณะนี้คุณอยู่นอกพื้นที่ให้บริการ (ระบบรองรับเฉพาะพื้นที่ มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์ ในรัศมี 500-1,000 เมตร) คุณสามารถกดเปิดดูแผนที่ภาพรวมทั้งหมดได้ที่นี่ 👇',
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: 'เปิดแผนที่ทั้งหมด',
+                      uri: `https://liff.line.me/${liffId}`,
+                    },
+                  },
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'location',
+                      label: 'ส่งตำแหน่งใหม่',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          channelAccessToken
+        );
+        continue;
+      }
+
+      // Within 1,000m of Thammasat Tha Prachan campus
+      const { toilets, usedRadiusM } = await searchWithExpandingRadius(
         supabaseAdmin,
         lat,
         lng,
         {}
       );
-
-      // Round coordinates to 3 decimal places before storing in `search_logs`
-      const roundedLat = roundCoord3(lat);
-      const roundedLng = roundCoord3(lng);
 
       await supabaseAdmin.from('search_logs').insert([
         {
@@ -241,45 +312,35 @@ Deno.serve(async (req: Request) => {
       ]);
 
       if (toilets.length === 0) {
-        // Fallback to Thammasat Tha Prachan campus center if user is outside campus
-        const fallbackSearch = await searchWithExpandingRadius(
-          supabaseAdmin,
-          THA_PRACHAN_CENTER.lat,
-          THA_PRACHAN_CENTER.lng,
-          {}
+        await replyToLine(
+          replyToken,
+          [
+            {
+              type: 'text',
+              text: 'ขออภัยครับ ไม่พบห้องน้ำที่เปิดใช้งานในรัศมีที่กำหนดรอบตำแหน่งของคุณ คุณสามารถกดเปิดดูแผนที่ภาพรวมทั้งหมดได้ที่นี่ 👇',
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: 'เปิดแผนที่ทั้งหมด',
+                      uri: `https://liff.line.me/${liffId}`,
+                    },
+                  },
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'location',
+                      label: 'ส่งตำแหน่งใหม่',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          channelAccessToken
         );
-
-        if (fallbackSearch.toilets.length > 0) {
-          const flexMsg = buildNearbyToiletsCarouselMessage(fallbackSearch.toilets, {
-            appBaseUrl,
-            liffId,
-            activeRadiusM: fallbackSearch.usedRadiusM,
-            activeFilterLabel: 'มธ. ท่าพระจันทร์',
-          });
-          await replyToLine(
-            replyToken,
-            [
-              {
-                type: 'text',
-                text: '📍 ตำแหน่งของคุณอยู่นอกพื้นที่ มธ. ท่าพระจันทร์ ขอแนะนำห้องน้ำหลักภายในมหาวิทยาลัยให้คุณครับ:',
-              },
-              flexMsg,
-            ],
-            channelAccessToken
-          );
-        } else {
-          await replyToLine(
-            replyToken,
-            [
-              {
-                type: 'text',
-                text: 'ไม่พบห้องน้ำที่เปิดใช้งานในรัศมี 3 กม. รอบตำแหน่งของคุณครับ 🙏\nสามารถเปิดแผนที่เพื่อดูห้องน้ำทั้งหมดใน LIFF ได้เลยครับ',
-                quickReply: buildQuickReplyFilterItems(),
-              },
-            ],
-            channelAccessToken
-          );
-        }
       } else {
         const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
           appBaseUrl,
@@ -292,98 +353,24 @@ Deno.serve(async (req: Request) => {
       continue;
     }
 
-    // 3. Postback Event (Rich Menu Button 3 "กรองห้องน้ำ" or Quick Reply filter chips)
+    // 3. Postback Event (Rich Menu Button "กรองห้องน้ำ" or Quick Reply filter chips)
     if (event.type === 'postback' && replyToken) {
       const params = new URLSearchParams(event.postback?.data || '');
       const filterKey = params.get('filter') || 'all';
-      const { filtersJson, filterLabel } = parseFilterKey(filterKey);
 
-      // Look up the user's latest rounded location from `search_logs` (if any)
-      const { data: lastLogs } = await supabaseAdmin
-        .from('search_logs')
-        .select('search_lat, search_lng')
-        .eq('line_user_id', hashedUserId)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      const lastLocation = Array.isArray(lastLogs) && lastLogs.length > 0 ? lastLogs[0] : null;
-      let targetLat = THA_PRACHAN_CENTER.lat;
-      let targetLng = THA_PRACHAN_CENTER.lng;
-
-      if (lastLocation?.search_lat && lastLocation?.search_lng) {
-        targetLat = Number(lastLocation.search_lat);
-        targetLng = Number(lastLocation.search_lng);
-      }
-
-      let { toilets, usedRadiusM } = await searchWithExpandingRadius(
-        supabaseAdmin,
-        targetLat,
-        targetLng,
-        filtersJson
-      );
-
-      // If user's last location returned 0 toilets, fallback to Thammasat center
-      if (
-        toilets.length === 0 &&
-        (targetLat !== THA_PRACHAN_CENTER.lat || targetLng !== THA_PRACHAN_CENTER.lng)
-      ) {
-        targetLat = THA_PRACHAN_CENTER.lat;
-        targetLng = THA_PRACHAN_CENTER.lng;
-        const fallbackRes = await searchWithExpandingRadius(
-          supabaseAdmin,
-          targetLat,
-          targetLng,
-          filtersJson
-        );
-        toilets = fallbackRes.toilets;
-        usedRadiusM = fallbackRes.usedRadiusM;
-      }
-
-      await supabaseAdmin.from('search_logs').insert([
-        {
-          line_user_id: hashedUserId,
-          source: 'line_webhook',
-          search_lat: roundCoord3(targetLat),
-          search_lng: roundCoord3(targetLng),
-          radius_m: usedRadiusM,
-          results_count: toilets.length,
-          filters: filtersJson,
-        },
-      ]);
-
-      if (toilets.length > 0) {
-        const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
-          appBaseUrl,
-          liffId,
-          activeRadiusM: usedRadiusM,
-          activeFilterLabel: filterLabel || 'มธ. ท่าพระจันทร์',
-        });
-        await replyToLine(replyToken, [flexMsg], channelAccessToken);
-      } else {
+      // If user tapped "กรองห้องน้ำ" (action=filter), send the interactive filter card
+      if (filterKey === 'all' || params.get('action') === 'filter') {
         await replyToLine(
           replyToken,
           [buildFilterSelectionFlexMessage(liffId)],
           channelAccessToken
         );
-      }
-      continue;
-    }
-
-    // 4. Text Message Event (e.g. "กรองห้องน้ำ" from Rich Menu Button 3, "หาห้องน้ำ", etc.)
-    if (event.type === 'message' && event.message?.type === 'text' && replyToken) {
-      const text = String(event.message.text || '').trim();
-      let filterKey = 'all';
-      if (text.includes('พิการ')) {
-        filterKey = 'has_disabled_access';
-      } else if (text.includes('สายฉีด') || text.includes('ฉีด')) {
-        filterKey = 'has_bidet';
-      } else if (text.includes('ผ้าอนามัย')) {
-        filterKey = 'sanitary';
+        continue;
       }
 
       const { filtersJson, filterLabel } = parseFilterKey(filterKey);
 
-      // Always retrieve user's latest location or fallback to Thammasat center
+      // Check if user has a recent search location within 1,000m
       const { data: lastLogs } = await supabaseAdmin
         .from('search_logs')
         .select('search_lat, search_lng')
@@ -392,53 +379,87 @@ Deno.serve(async (req: Request) => {
         .limit(1);
 
       const lastLocation = Array.isArray(lastLogs) && lastLogs.length > 0 ? lastLogs[0] : null;
-      let targetLat = THA_PRACHAN_CENTER.lat;
-      let targetLng = THA_PRACHAN_CENTER.lng;
 
       if (lastLocation?.search_lat && lastLocation?.search_lng) {
-        targetLat = Number(lastLocation.search_lat);
-        targetLng = Number(lastLocation.search_lng);
+        const lat = Number(lastLocation.search_lat);
+        const lng = Number(lastLocation.search_lng);
+        const dist = calculateHaversineM(lat, lng, THA_PRACHAN_CENTER.lat, THA_PRACHAN_CENTER.lng);
+
+        if (dist <= 1000) {
+          const { toilets, usedRadiusM } = await searchWithExpandingRadius(
+            supabaseAdmin,
+            lat,
+            lng,
+            filtersJson
+          );
+
+          if (toilets.length > 0) {
+            const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
+              appBaseUrl,
+              liffId,
+              activeRadiusM: usedRadiusM,
+              activeFilterLabel: filterLabel || 'มธ. ท่าพระจันทร์',
+            });
+            await replyToLine(replyToken, [flexMsg], channelAccessToken);
+            continue;
+          }
+        }
       }
 
-      let { toilets, usedRadiusM } = await searchWithExpandingRadius(
-        supabaseAdmin,
-        targetLat,
-        targetLng,
-        filtersJson
+      // If no valid recent campus location, send the filter selection card
+      await replyToLine(
+        replyToken,
+        [buildFilterSelectionFlexMessage(liffId)],
+        channelAccessToken
       );
+      continue;
+    }
 
-      if (
-        toilets.length === 0 &&
-        (targetLat !== THA_PRACHAN_CENTER.lat || targetLng !== THA_PRACHAN_CENTER.lng)
-      ) {
-        targetLat = THA_PRACHAN_CENTER.lat;
-        targetLng = THA_PRACHAN_CENTER.lng;
-        const fallbackRes = await searchWithExpandingRadius(
-          supabaseAdmin,
-          targetLat,
-          targetLng,
-          filtersJson
+    // 4. Text Message Event (e.g. "กรองห้องน้ำ" from Rich Menu, "หาห้องน้ำ", etc.)
+    if (event.type === 'message' && event.message?.type === 'text' && replyToken) {
+      const text = String(event.message.text || '').trim();
+
+      if (text.includes('กรอง')) {
+        await replyToLine(
+          replyToken,
+          [buildFilterSelectionFlexMessage(liffId)],
+          channelAccessToken
         );
-        toilets = fallbackRes.toilets;
-        usedRadiusM = fallbackRes.usedRadiusM;
-      }
-
-      if (toilets.length > 0) {
-        const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
-          appBaseUrl,
-          liffId,
-          activeRadiusM: usedRadiusM,
-          activeFilterLabel: filterLabel || 'มธ. ท่าพระจันทร์',
-        });
-        await replyToLine(replyToken, [flexMsg], channelAccessToken);
       } else {
         await replyToLine(
           replyToken,
           [
             {
               type: 'text',
-              text: 'กดปุ่ม "📍 ส่งตำแหน่งใหม่" ด้านล่างเพื่อค้นหาห้องน้ำใกล้คุณ หรือเลือกตัวกรองห้องน้ำได้เลยครับ 👇',
-              quickReply: buildQuickReplyFilterItems(),
+              text: 'สวัสดีครับ! ยินดีต้อนรับสู่ "ปลดปล่อย (Plod-Ploi)" 🚽✨\n\nกดส่งตำแหน่ง หรือเลือกเปิดแผนที่ห้องน้ำ มธ. ท่าพระจันทร์ ได้เลยครับ 👇',
+              quickReply: {
+                items: [
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'location',
+                      label: '📍 ส่งตำแหน่งค้นหา',
+                    },
+                  },
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'uri',
+                      label: '🗺️ เปิดแผนที่ LIFF',
+                      uri: `https://liff.line.me/${liffId}`,
+                    },
+                  },
+                  {
+                    type: 'action',
+                    action: {
+                      type: 'postback',
+                      label: '🔍 กรองห้องน้ำ',
+                      data: 'action=filter&filter=all',
+                      displayText: 'กรองห้องน้ำ',
+                    },
+                  },
+                ],
+              },
             },
           ],
           channelAccessToken

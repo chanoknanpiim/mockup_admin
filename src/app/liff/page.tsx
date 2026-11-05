@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLiff } from '@/context/LiffContext';
 import { createSupabaseClientInstance, getSupabaseConfig } from '@/lib/supabase';
 import LeafletMap, { MapToiletItem } from '@/components/LeafletMap';
@@ -74,6 +75,7 @@ function formatDistance(distanceM: number): string {
 }
 
 export default function LiffMapPage() {
+  const router = useRouter();
   const { coords, isLocating, isDarkMode, requestGpsLocation, setCustomCoordinates } = useLiff();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [selectedRadius, setSelectedRadius] = useState<number | 'auto'>('auto');
@@ -81,17 +83,34 @@ export default function LiffMapPage() {
   const [toilets, setToilets] = useState<NearbyToiletItem[]>([]);
   const [selectedToilet, setSelectedToilet] = useState<NearbyToiletItem | null>(null);
   const [requestedToiletId, setRequestedToiletId] = useState<number | null>(null);
+  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    const tid = Number(params.get('toilet_id'));
+
+    // 1. Deep link to report tab: tab=report
+    const tab = params.get('tab');
+    if (tab === 'report') {
+      router.replace('/liff/report');
+      return;
+    }
+
+    // 2. Query filter
+    const f = params.get('filter') as FilterKey | null;
+    if (f && ['all', 'has_disabled_access', 'has_bidet', 'sanitary'].includes(f)) {
+      setActiveFilter(f);
+    }
+
+    // 3. Deep link to toilet: toiletId or toilet_id
+    const tid = Number(params.get('toiletId') || params.get('toilet_id'));
     if (tid && !Number.isNaN(tid)) {
       setRequestedToiletId(tid);
+      setIsDetailSheetOpen(true);
     }
-  }, []);
+  }, [router]);
 
   const supabase = useMemo(() => {
     const cfg = getSupabaseConfig();
@@ -458,7 +477,10 @@ export default function LiffMapPage() {
         toilets={toilets}
         selectedToiletId={selectedToilet?.toilet_id ?? null}
         isDarkMode={isDarkMode}
-        onSelectToilet={(t) => setSelectedToilet(t)}
+        onSelectToilet={(t) => {
+          setSelectedToilet(t);
+          setIsDetailSheetOpen(true);
+        }}
       />
 
       {/* Section Header */}
@@ -539,7 +561,10 @@ export default function LiffMapPage() {
             return (
               <div
                 key={t.toilet_id}
-                onClick={() => setSelectedToilet(t)}
+                onClick={() => {
+                  setSelectedToilet(t);
+                  setIsDetailSheetOpen(true);
+                }}
                 style={{
                   backgroundColor: cardBg,
                   border: isSelected ? '1.5px solid #000066' : `1px solid ${cardBorder}`,
@@ -706,6 +731,203 @@ export default function LiffMapPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Toilet Detail Bottom Sheet / Modal */}
+      {isDetailSheetOpen && selectedToilet && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            backdropFilter: 'blur(3px)',
+          }}
+          onClick={() => setIsDetailSheetOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: cardBg,
+              borderTopLeftRadius: '24px',
+              borderTopRightRadius: '24px',
+              padding: '20px 20px 32px 20px',
+              boxShadow: '0 -8px 30px rgba(0, 0, 0, 0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Grabber bar */}
+            <div
+              style={{
+                width: '36px',
+                height: '4px',
+                borderRadius: '9999px',
+                backgroundColor: cardBorder,
+                margin: '0 auto 4px auto',
+              }}
+            />
+
+            {/* Header: Building + Floor & Close button */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: isDarkMode ? '#C7D2FE' : '#000066',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {selectedToilet.floor
+                    ? `${selectedToilet.building_name || 'มธ. ท่าพระจันทร์'} F${selectedToilet.floor}`
+                    : selectedToilet.building_name || 'มธ. ท่าพระจันทร์'}
+                </div>
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: 800,
+                    margin: '3px 0 0 0',
+                    color: textPrimary,
+                  }}
+                >
+                  {selectedToilet.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsDetailSheetOpen(false)}
+                style={{
+                  background: badgeBg,
+                  border: `1px solid ${cardBorder}`,
+                  borderRadius: '9999px',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: subText,
+                  fontWeight: 700,
+                  fontSize: '14px',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Status & Distance & Rating */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  backgroundColor:
+                    formatToiletStatus(selectedToilet.status, true) === 'เปิด'
+                      ? '#DCFCE7'
+                      : '#FEE2E2',
+                  color:
+                    formatToiletStatus(selectedToilet.status, true) === 'เปิด'
+                      ? '#15803D'
+                      : '#B91C1C',
+                }}
+              >
+                ● {formatToiletStatus(selectedToilet.status, true)} (08:30 - 19:00)
+              </span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: textPrimary }}>
+                ห่าง {formatDistance(selectedToilet.distance_m)}
+              </span>
+              <span
+                style={{ fontSize: '12px', fontWeight: 700, color: textPrimary, marginLeft: 'auto' }}
+              >
+                <span style={{ color: '#FBBC04' }}>★ </span>
+                {Number(selectedToilet.avg_rating || 5.0).toFixed(1)}
+              </span>
+            </div>
+
+            {/* Description */}
+            {(selectedToilet.description || selectedToilet.location_text) && (
+              <div style={{ fontSize: '13px', color: subText, lineHeight: 1.45 }}>
+                📍 {selectedToilet.description || selectedToilet.location_text}
+              </div>
+            )}
+
+            {/* Facilities pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {(selectedToilet.facilities || []).map((fac) => (
+                <span
+                  key={fac}
+                  style={{
+                    backgroundColor: badgeBg,
+                    color: textPrimary,
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                    border: `1px solid ${cardBorder}`,
+                  }}
+                >
+                  {fac}
+                </span>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedToilet.location_lat},${selectedToilet.location_lng}&travelmode=walking`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  backgroundColor: '#000066',
+                  color: '#FFFFFF',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                  padding: '12px',
+                  borderRadius: '9999px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                }}
+              >
+                นำทางผ่าน Google Maps
+              </a>
+              <a
+                href={`/liff/toilet/${selectedToilet.toilet_id}`}
+                style={{
+                  backgroundColor: cardBg,
+                  color: '#000066',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                  padding: '12px',
+                  borderRadius: '9999px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  border: '1.5px solid #000066',
+                }}
+              >
+                ดูรีวิวทั้งหมด / แจ้งปัญหาจุดนี้
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

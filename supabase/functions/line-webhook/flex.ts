@@ -163,18 +163,27 @@ export function buildQuickReplyFilterItems() {
         type: 'action',
         action: {
           type: 'postback',
-          label: 'ห้องน้ำผู้พิการ',
+          label: 'ห้องน้ำคนพิการ',
           data: 'action=filter&filter=has_disabled_access',
-          displayText: 'กรองห้องน้ำ: ห้องน้ำผู้พิการ',
+          displayText: 'กรองห้องน้ำ: ห้องน้ำคนพิการ',
         },
       },
       {
         type: 'action',
         action: {
           type: 'postback',
-          label: 'ผ้าอนามัย',
+          label: 'มีสายฉีดชำระ',
+          data: 'action=filter&filter=has_bidet',
+          displayText: 'กรองห้องน้ำ: มีสายฉีดชำระ',
+        },
+      },
+      {
+        type: 'action',
+        action: {
+          type: 'postback',
+          label: 'มีผ้าอนามัย',
           data: 'action=filter&filter=sanitary',
-          displayText: 'กรองห้องน้ำ: ผ้าอนามัย',
+          displayText: 'กรองห้องน้ำ: มีผ้าอนามัย',
         },
       },
     ],
@@ -187,7 +196,7 @@ export function buildToiletBubble(
   config: FlexBuilderConfig
 ) {
   const liffIdOrPlaceholder = config.liffId || 'YOUR_LIFF_ID';
-  const detailUrl = `https://liff.line.me/${liffIdOrPlaceholder}?toilet_id=${toilet.toilet_id}`;
+  const detailUrl = `https://liff.line.me/${liffIdOrPlaceholder}?toiletId=${toilet.toilet_id}`;
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${toilet.location_lat},${toilet.location_lng}&travelmode=walking`;
 
   const rawName = toilet.name || toilet.location_text || `ห้องน้ำ #${toilet.toilet_id}`;
@@ -606,22 +615,60 @@ export function buildFilterSelectionFlexMessage(liffId?: string) {
         type: 'box',
         layout: 'vertical',
         backgroundColor: '#FFFFFF',
-        paddingAll: '22px',
-        spacing: 'sm',
+        paddingAll: '20px',
+        spacing: 'md',
         contents: [
           {
             type: 'text',
-            text: 'กรองห้องน้ำใกล้คุณ',
-            size: 'xl',
+            text: 'กรองห้องน้ำ มธ. ท่าพระจันทร์',
+            size: 'lg',
             weight: 'bold',
             color: PRIMARY,
           },
           {
             type: 'text',
-            text: 'เลือกเงื่อนไขจากปุ่มด้านล่าง แล้วส่งตำแหน่งของคุณ ระบบจะค้นหาห้องน้ำที่ตรงเงื่อนไขให้ทันที',
-            size: 'sm',
+            text: 'เลือกเงื่อนไขเพื่อเปิดดูห้องน้ำที่ต้องการบนแผนที่ หรือกดปุ่มด้านล่างเพื่อค้นหา:',
+            size: 'xs',
             color: TEXT_MUTED,
             wrap: true,
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            margin: 'md',
+            contents: [
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'sm',
+                action: {
+                  type: 'uri',
+                  label: 'ห้องน้ำคนพิการ',
+                  uri: `${mapUrl}?filter=has_disabled_access`,
+                },
+              },
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'sm',
+                action: {
+                  type: 'uri',
+                  label: 'มีสายฉีดชำระ',
+                  uri: `${mapUrl}?filter=has_bidet`,
+                },
+              },
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'sm',
+                action: {
+                  type: 'uri',
+                  label: 'มีผ้าอนามัย',
+                  uri: `${mapUrl}?filter=sanitary`,
+                },
+              },
+            ],
           },
         ],
       },
@@ -629,32 +676,18 @@ export function buildFilterSelectionFlexMessage(liffId?: string) {
         type: 'box',
         layout: 'vertical',
         backgroundColor: '#FFFFFF',
-        paddingAll: '20px',
-        paddingTop: '4px',
+        paddingAll: '16px',
+        paddingTop: '0px',
         contents: [
           {
-            type: 'box',
-            layout: 'vertical',
-            backgroundColor: PRIMARY,
-            cornerRadius: '8px',
-            paddingAll: '12px',
-            alignItems: 'center',
-            justifyContent: 'center',
+            type: 'button',
+            style: 'primary',
+            color: PRIMARY,
             action: {
               type: 'uri',
-              label: 'แผนที่',
+              label: 'ดูทั้งหมดบนแผนที่ LIFF',
               uri: mapUrl,
             },
-            contents: [
-              {
-                type: 'text',
-                text: 'แผนที่',
-                color: '#FFFFFF',
-                size: 'sm',
-                weight: 'bold',
-                align: 'center',
-              },
-            ],
           },
         ],
       },

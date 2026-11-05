@@ -350,13 +350,19 @@ export default function LeafletMap({
     });
   }, [leafletLoaded, userLat, userLng, userLabel, radiusM, toilets, selectedToiletId, onSelectToilet]);
 
-  // 5. Open popup when `selectedToiletId` changes
+  // 5. Pan/Zoom & Open popup when `selectedToiletId` changes
   useEffect(() => {
     if (!selectedToiletId || !mapInstanceRef.current) return;
     const marker = markerMapRef.current.get(selectedToiletId);
     const target = toilets.find((t) => t.toilet_id === selectedToiletId);
     if (marker && target) {
-      marker.openPopup();
+      mapInstanceRef.current.flyTo([target.location_lat, target.location_lng], 18, {
+        animate: true,
+        duration: 0.8,
+      });
+      setTimeout(() => {
+        marker.openPopup();
+      }, 350);
     }
   }, [selectedToiletId, toilets]);
 
