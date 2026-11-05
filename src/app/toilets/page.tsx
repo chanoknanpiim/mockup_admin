@@ -27,7 +27,7 @@ export default function ToiletsPage() {
   const [formLat, setFormLat] = useState<string>('13.7563');
   const [formLng, setFormLng] = useState<string>('100.4902');
   const [formType, setFormType] = useState('แยกเพศ');
-  const [formStatus, setFormStatus] = useState('ปกติ');
+  const [formStatus, setFormStatus] = useState('ใช้งานได้');
   const [selectedAmenities, setSelectedAmenities] = useState<number[]>([]);
 
   const openModal = (toilet?: Toilet) => {
@@ -39,7 +39,7 @@ export default function ToiletsPage() {
       setFormLat(String(toilet.location_lat ?? 13.7563));
       setFormLng(String(toilet.location_lng ?? 100.4902));
       setFormType(toilet.toilet_type || 'แยกเพศ');
-      setFormStatus(toilet.status || 'ปกติ');
+      setFormStatus(toilet.status || 'ใช้งานได้');
 
       const linkedIds = toiletAmenities
         .filter((ta) => Number(ta.toilet_id) === Number(toilet.toilet_id))
@@ -53,7 +53,7 @@ export default function ToiletsPage() {
       setFormLat('13.7563');
       setFormLng('100.4902');
       setFormType('แยกเพศ');
-      setFormStatus('ปกติ');
+      setFormStatus('ใช้งานได้');
       setSelectedAmenities([]);
     }
     setModalOpen(true);
@@ -139,9 +139,9 @@ export default function ToiletsPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="">แสดงทุกสถานะ</option>
-            <option value="ปกติ">ใช้งานได้ปกติ</option>
+            <option value="ใช้งานได้">ใช้งานได้ปกติ</option>
             <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
-            <option value="ชำรุด">ชำรุด / ปิดซ่อม</option>
+            <option value="ปิดปรับปรุง">ชำรุด / ปิดปรับปรุง</option>
           </select>
         </div>
       </div>
@@ -170,9 +170,9 @@ export default function ToiletsPage() {
               ) : (
                 filtered.map((t) => {
                   const statusBadge =
-                    t.status === 'ปกติ'
+                    t.status === 'ใช้งานได้' || t.status === 'ปกติ'
                       ? 'success'
-                      : t.status === 'ชำรุด'
+                      : t.status === 'ปิดปรับปรุง' || t.status === 'ชำรุด'
                       ? 'danger'
                       : 'warning';
 
@@ -342,9 +342,9 @@ export default function ToiletsPage() {
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value)}
                   >
-                    <option value="ปกติ">ใช้งานได้ปกติ</option>
+                    <option value="ใช้งานได้">ใช้งานได้ปกติ</option>
                     <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
-                    <option value="ชำรุด">ชำรุด / ปิดซ่อม</option>
+                    <option value="ปิดปรับปรุง">ชำรุด / ปิดปรับปรุง</option>
                   </select>
                 </div>
               </div>

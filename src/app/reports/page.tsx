@@ -27,7 +27,7 @@ export default function ReportsPage() {
 
   // Report Detail Modal State
   const [detailReport, setDetailReport] = useState<ReportItem | null>(null);
-  const [detailToiletStatus, setDetailToiletStatus] = useState('ปกติ');
+  const [detailToiletStatus, setDetailToiletStatus] = useState('ใช้งานได้');
 
   const openNewReportModal = () => {
     setSelectedToiletId(toilets[0]?.toilet_id || 101);
@@ -96,7 +96,7 @@ export default function ReportsPage() {
   const openReportDetail = (report: ReportItem) => {
     setDetailReport(report);
     const t = toilets.find((x) => Number(x.toilet_id) === Number(report.toilet_id));
-    setDetailToiletStatus(t ? t.status : 'ปกติ');
+    setDetailToiletStatus(t ? t.status : 'ใช้งานได้');
   };
 
   const handleUpdateToiletStatus = async () => {
@@ -366,9 +366,9 @@ export default function ReportsPage() {
                   value={detailToiletStatus}
                   onChange={(e) => setDetailToiletStatus(e.target.value)}
                 >
-                  <option value="ปกติ">ซ่อมเสร็จแล้ว (เปิดใช้งานปกติ)</option>
+                  <option value="ใช้งานได้">ซ่อมเสร็จแล้ว (ใช้งานได้)</option>
                   <option value="ทำความสะอาด">กำลังทำความสะอาด</option>
-                  <option value="ชำรุด">ชำรุด / ปิดซ่อมชั่วคราว</option>
+                  <option value="ปิดปรับปรุง">ชำรุด / ปิดปรับปรุง</option>
                 </select>
               </div>
             </div>

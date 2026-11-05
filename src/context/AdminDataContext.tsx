@@ -12,15 +12,6 @@ import {
   AdminItem,
   ReportItem,
   ReviewItem,
-  INITIAL_BUILDINGS,
-  INITIAL_LOCATIONS,
-  INITIAL_AMENITIES,
-  INITIAL_TOILETS,
-  INITIAL_TOILET_AMENITIES,
-  INITIAL_USERS,
-  INITIAL_ADMINS,
-  INITIAL_REPORTS,
-  INITIAL_REVIEWS,
 } from '@/lib/types';
 import {
   createSupabaseClientInstance,
@@ -94,14 +85,12 @@ interface AdminDataContextType {
   reviews: ReviewItem[];
   isConnected: boolean;
   isLoading: boolean;
-  rlsBlocked: boolean;
   supabaseUrl: string;
   supabaseKey: string;
   storageBucket: string;
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error') => void;
   syncFromSupabase: (silent?: boolean) => Promise<void>;
-  seedBuildingsToSupabase: () => Promise<boolean>;
   getBuildingName: (buildingId: number) => string;
   getToiletLabel: (toiletId: number) => string;
   saveToilet: (input: SaveToiletInput) => Promise<boolean>;
@@ -128,21 +117,21 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rlsBlocked, setRlsBlocked] = useState<boolean>(false);
 
   const [supabaseUrl, setSupabaseUrl] = useState<string>(ENV_SUPABASE_URL);
   const [supabaseKey, setSupabaseKey] = useState<string>(ENV_SUPABASE_KEY);
   const [storageBucket, setStorageBucket] = useState<string>(ENV_STORAGE_BUCKET);
 
-  const [buildings, setBuildings] = useState<Building[]>(INITIAL_BUILDINGS);
-  const [locations, setLocations] = useState<LocationItem[]>(INITIAL_LOCATIONS);
-  const [amenities, setAmenities] = useState<Amenity[]>(INITIAL_AMENITIES);
-  const [toilets, setToilets] = useState<Toilet[]>(INITIAL_TOILETS);
-  const [toiletAmenities, setToiletAmenities] = useState<ToiletAmenity[]>(INITIAL_TOILET_AMENITIES);
-  const [users, setUsers] = useState<UserItem[]>(INITIAL_USERS);
-  const [admins, setAdmins] = useState<AdminItem[]>(INITIAL_ADMINS);
-  const [reports, setReports] = useState<ReportItem[]>(INITIAL_REPORTS);
-  const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
+  // ดึงข้อมูลจาก Supabase 100% โดยไม่ Hardcode ข้อมูลจำลองในโค้ด
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [toilets, setToilets] = useState<Toilet[]>([]);
+  const [toiletAmenities, setToiletAmenities] = useState<ToiletAmenity[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [admins, setAdmins] = useState<AdminItem[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -176,34 +165,15 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
           client.from('admin').select('*'),
         ]);
 
-        if (!bRes.error && bRes.data && bRes.data.length > 0) {
-          setBuildings(bRes.data);
-          setRlsBlocked(false);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('plodploi_buildings_cache', JSON.stringify(bRes.data));
-          }
-        } else if (!bRes.error && bRes.data && bRes.data.length === 0) {
-          const { data: seeded, error: seedErr } = await client
-            .from('buildings')
-            .upsert(INITIAL_BUILDINGS, { onConflict: 'building_id' })
-            .select('*')
-            .order('building_id');
-          if (!seedErr && seeded && seeded.length > 0) {
-            setBuildings(seeded);
-            setRlsBlocked(false);
-          } else {
-            if (seedErr) setRlsBlocked(true);
-            setBuildings(INITIAL_BUILDINGS);
-          }
-        }
-        if (!lRes.error && lRes.data && lRes.data.length > 0) setLocations(lRes.data);
-        if (!aRes.error && aRes.data && aRes.data.length > 0) setAmenities(aRes.data);
-        if (!tRes.error && tRes.data && tRes.data.length > 0) setToilets(tRes.data);
-        if (!taRes.error && taRes.data && taRes.data.length > 0) setToiletAmenities(taRes.data);
-        if (!rRes.error && rRes.data && rRes.data.length > 0) setReports(rRes.data);
-        if (!revRes.error && revRes.data && revRes.data.length > 0) setReviews(revRes.data);
-        if (!uRes.error && uRes.data && uRes.data.length > 0) setUsers(uRes.data);
-        if (!admRes.error && admRes.data && admRes.data.length > 0) setAdmins(admRes.data);
+        if (!bRes.error && bRes.data) setBuildings(bRes.data);
+        if (!lRes.error && lRes.data) setLocations(lRes.data);
+        if (!aRes.error && aRes.data) setAmenities(aRes.data);
+        if (!tRes.error && tRes.data) setToilets(tRes.data);
+        if (!taRes.error && taRes.data) setToiletAmenities(taRes.data);
+        if (!rRes.error && rRes.data) setReports(rRes.data);
+        if (!revRes.error && revRes.data) setReviews(revRes.data);
+        if (!uRes.error && uRes.data) setUsers(uRes.data);
+        if (!admRes.error && admRes.data) setAdmins(admRes.data);
 
         setIsConnected(true);
         if (!silent) {
@@ -261,6 +231,11 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
 
   /* --- 1. Toilets & Toilet_Amenities CRUD --- */
   const saveToilet = async (input: SaveToiletInput): Promise<boolean> => {
+    if (!supabaseClient) {
+      showToast('ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase', 'error');
+      return false;
+    }
+
     const {
       id,
       building_id,
@@ -296,26 +271,24 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       has_disabled_access,
     };
 
-    let savedToiletId = id
-      ? Number(id)
-      : toilets.reduce((max, x) => Math.max(max, Number(x.toilet_id)), 100) + 1;
+    let savedToiletId = id ? Number(id) : 0;
 
-    if (supabaseClient) {
-      if (id) {
-        const { error } = await supabaseClient.from('toilets').update(payload).eq('toilet_id', id);
-        if (error) {
-          showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error');
-          return false;
-        }
-      } else {
-        const { data, error } = await supabaseClient.from('toilets').insert([payload]).select();
-        if (error) {
-          showToast('เพิ่มห้องน้ำไม่สำเร็จ: ' + error.message, 'error');
-          return false;
-        }
-        if (data && data[0]) savedToiletId = data[0].toilet_id;
+    if (id) {
+      const { error } = await supabaseClient.from('toilets').update(payload).eq('toilet_id', id);
+      if (error) {
+        showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error');
+        return false;
       }
+    } else {
+      const { data, error } = await supabaseClient.from('toilets').insert([payload]).select();
+      if (error) {
+        showToast('เพิ่มห้องน้ำไม่สำเร็จ: ' + error.message, 'error');
+        return false;
+      }
+      if (data && data[0]) savedToiletId = data[0].toilet_id;
+    }
 
+    if (savedToiletId) {
       await supabaseClient.from('toilet_amenities').delete().eq('toilet_id', savedToiletId);
       if (selectedAmenityIds.length > 0) {
         const taRows = selectedAmenityIds.map((aid) => ({
@@ -324,59 +297,29 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         }));
         await supabaseClient.from('toilet_amenities').insert(taRows);
       }
-      await syncFromSupabase(true);
-    } else {
-      if (id) {
-        setToilets((prev) =>
-          prev.map((x) => (Number(x.toilet_id) === Number(id) ? { ...x, ...payload } : x))
-        );
-      } else {
-        setToilets((prev) => [...prev, { toilet_id: savedToiletId, ...payload }]);
-      }
-      setToiletAmenities((prev) => {
-        const filtered = prev.filter((ta) => Number(ta.toilet_id) !== Number(savedToiletId));
-        const added = selectedAmenityIds.map((aid) => ({
-          toilet_amenities_id: Date.now() + aid,
-          toilet_id: savedToiletId,
-          amenity_id: aid,
-        }));
-        return [...filtered, ...added];
-      });
     }
 
-    showToast('บันทึกข้อมูลห้องน้ำเรียบร้อยแล้ว', 'success');
+    await syncFromSupabase(true);
+    showToast('บันทึกข้อมูลห้องน้ำลง Supabase เรียบร้อยแล้ว', 'success');
     return true;
   };
 
   const deleteToilet = async (toiletId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      await supabaseClient.from('toilet_amenities').delete().eq('toilet_id', toiletId);
-      const { error } = await supabaseClient.from('toilets').delete().eq('toilet_id', toiletId);
-      if (error) {
-        showToast('ลบไม่สำเร็จ: ' + error.message, 'error');
-        return false;
-      }
-      await syncFromSupabase(true);
-    } else {
-      setToilets((prev) => prev.filter((t) => Number(t.toilet_id) !== Number(toiletId)));
-      setToiletAmenities((prev) => prev.filter((ta) => Number(ta.toilet_id) !== Number(toiletId)));
+    if (!supabaseClient) return false;
+    await supabaseClient.from('toilet_amenities').delete().eq('toilet_id', toiletId);
+    const { error } = await supabaseClient.from('toilets').delete().eq('toilet_id', toiletId);
+    if (error) {
+      showToast('ลบไม่สำเร็จ: ' + error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('ลบข้อมูลห้องน้ำสำเร็จ', 'success');
     return true;
   };
 
   /* --- 2. Buildings CRUD --- */
-  const updateLocalBuildings = (updater: (prev: Building[]) => Building[]) => {
-    setBuildings((prev) => {
-      const next = updater(prev);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('plodploi_buildings_cache', JSON.stringify(next));
-      }
-      return next;
-    });
-  };
-
   const saveBuilding = async ({ id, building_name, description }: SaveBuildingInput): Promise<boolean> => {
+    if (!supabaseClient) return false;
     if (!building_name.trim()) {
       showToast('กรุณากรอกชื่ออาคาร', 'error');
       return false;
@@ -387,54 +330,36 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       description: description.trim(),
     };
 
-    if (supabaseClient) {
-      if (id) {
-        const { error } = await supabaseClient
-          .from('buildings')
-          .update(payload)
-          .eq('building_id', id);
-        if (error) {
-          updateLocalBuildings((prev) =>
-            prev.map((x) => (Number(x.building_id) === Number(id) ? { ...x, ...payload } : x))
-          );
-        } else {
-          await syncFromSupabase(true);
-        }
-      } else {
-        const { error } = await supabaseClient.from('buildings').insert([payload]);
-        if (error) {
-          const newId = buildings.reduce((m, x) => Math.max(m, Number(x.building_id)), 0) + 1;
-          updateLocalBuildings((prev) => [...prev, { building_id: newId, ...payload }]);
-        } else {
-          await syncFromSupabase(true);
-        }
+    if (id) {
+      const { error } = await supabaseClient
+        .from('buildings')
+        .update(payload)
+        .eq('building_id', id);
+      if (error) {
+        showToast(error.message, 'error');
+        return false;
       }
     } else {
-      if (id) {
-        updateLocalBuildings((prev) =>
-          prev.map((x) => (Number(x.building_id) === Number(id) ? { ...x, ...payload } : x))
-        );
-      } else {
-        const newId = buildings.reduce((m, x) => Math.max(m, Number(x.building_id)), 0) + 1;
-        updateLocalBuildings((prev) => [...prev, { building_id: newId, ...payload }]);
+      const { error } = await supabaseClient.from('buildings').insert([payload]);
+      if (error) {
+        showToast(error.message, 'error');
+        return false;
       }
     }
 
-    showToast('บันทึกข้อมูลอาคารสำเร็จ', 'success');
+    await syncFromSupabase(true);
+    showToast('บันทึกข้อมูลอาคารลง Supabase สำเร็จ', 'success');
     return true;
   };
 
   const deleteBuilding = async (buildingId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      const { error } = await supabaseClient.from('buildings').delete().eq('building_id', buildingId);
-      if (error) {
-        updateLocalBuildings((prev) => prev.filter((b) => Number(b.building_id) !== Number(buildingId)));
-      } else {
-        await syncFromSupabase(true);
-      }
-    } else {
-      updateLocalBuildings((prev) => prev.filter((b) => Number(b.building_id) !== Number(buildingId)));
+    if (!supabaseClient) return false;
+    const { error } = await supabaseClient.from('buildings').delete().eq('building_id', buildingId);
+    if (error) {
+      showToast('ลบไม่ได้ (อาจมีห้องน้ำผูกกับอาคารนี้อยู่): ' + error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('ลบอาคารเรียบร้อยแล้ว', 'success');
     return true;
   };
@@ -447,6 +372,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     room_name,
     description,
   }: SaveLocationInput): Promise<boolean> => {
+    if (!supabaseClient) return false;
     if (!room_name.trim()) {
       showToast('กรุณาระบุชื่อห้องหรือจุดอ้างอิง', 'error');
       return false;
@@ -459,56 +385,43 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       description: description.trim(),
     };
 
-    if (supabaseClient) {
-      if (id) {
-        const { error } = await supabaseClient
-          .from('locations')
-          .update(payload)
-          .eq('location_id', id);
-        if (error) {
-          showToast(error.message, 'error');
-          return false;
-        }
-      } else {
-        const { error } = await supabaseClient.from('locations').insert([payload]);
-        if (error) {
-          showToast(error.message, 'error');
-          return false;
-        }
-      }
-      await syncFromSupabase(true);
-    } else {
-      if (id) {
-        setLocations((prev) =>
-          prev.map((x) => (Number(x.location_id) === Number(id) ? { ...x, ...payload } : x))
-        );
-      } else {
-        const newId = locations.reduce((m, x) => Math.max(m, Number(x.location_id)), 0) + 1;
-        setLocations((prev) => [...prev, { location_id: newId, ...payload }]);
-      }
-    }
-
-    showToast('บันทึกจุดอ้างอิงเรียบร้อยแล้ว', 'success');
-    return true;
-  };
-
-  const deleteLocation = async (locationId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      const { error } = await supabaseClient.from('locations').delete().eq('location_id', locationId);
+    if (id) {
+      const { error } = await supabaseClient
+        .from('locations')
+        .update(payload)
+        .eq('location_id', id);
       if (error) {
         showToast(error.message, 'error');
         return false;
       }
-      await syncFromSupabase(true);
     } else {
-      setLocations((prev) => prev.filter((l) => Number(l.location_id) !== Number(locationId)));
+      const { error } = await supabaseClient.from('locations').insert([payload]);
+      if (error) {
+        showToast(error.message, 'error');
+        return false;
+      }
     }
+
+    await syncFromSupabase(true);
+    showToast('บันทึกจุดอ้างอิงลง Supabase เรียบร้อยแล้ว', 'success');
+    return true;
+  };
+
+  const deleteLocation = async (locationId: number): Promise<boolean> => {
+    if (!supabaseClient) return false;
+    const { error } = await supabaseClient.from('locations').delete().eq('location_id', locationId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
+    }
+    await syncFromSupabase(true);
     showToast('ลบจุดอ้างอิงเรียบร้อยแล้ว', 'success');
     return true;
   };
 
   /* --- 4. Amenities CRUD --- */
   const saveAmenity = async ({ id, amenity_name }: SaveAmenityInput): Promise<boolean> => {
+    if (!supabaseClient) return false;
     if (!amenity_name.trim()) {
       showToast('กรุณากรอกชื่อสิ่งอำนวยความสะดวก', 'error');
       return false;
@@ -516,51 +429,37 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
 
     const payload = { amenity_name: amenity_name.trim() };
 
-    if (supabaseClient) {
-      if (id) {
-        const { error } = await supabaseClient
-          .from('amenities')
-          .update(payload)
-          .eq('amenity_id', id);
-        if (error) {
-          showToast(error.message, 'error');
-          return false;
-        }
-      } else {
-        const { error } = await supabaseClient.from('amenities').insert([payload]);
-        if (error) {
-          showToast(error.message, 'error');
-          return false;
-        }
-      }
-      await syncFromSupabase(true);
-    } else {
-      if (id) {
-        setAmenities((prev) =>
-          prev.map((x) => (Number(x.amenity_id) === Number(id) ? { ...x, ...payload } : x))
-        );
-      } else {
-        const newId = amenities.reduce((m, x) => Math.max(m, Number(x.amenity_id)), 0) + 1;
-        setAmenities((prev) => [...prev, { amenity_id: newId, ...payload }]);
-      }
-    }
-
-    showToast('บันทึกสิ่งอำนวยความสะดวกสำเร็จ', 'success');
-    return true;
-  };
-
-  const deleteAmenity = async (amenityId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      await supabaseClient.from('toilet_amenities').delete().eq('amenity_id', amenityId);
-      const { error } = await supabaseClient.from('amenities').delete().eq('amenity_id', amenityId);
+    if (id) {
+      const { error } = await supabaseClient
+        .from('amenities')
+        .update(payload)
+        .eq('amenity_id', id);
       if (error) {
         showToast(error.message, 'error');
         return false;
       }
-      await syncFromSupabase(true);
     } else {
-      setAmenities((prev) => prev.filter((a) => Number(a.amenity_id) !== Number(amenityId)));
+      const { error } = await supabaseClient.from('amenities').insert([payload]);
+      if (error) {
+        showToast(error.message, 'error');
+        return false;
+      }
     }
+
+    await syncFromSupabase(true);
+    showToast('บันทึกสิ่งอำนวยความสะดวกลง Supabase สำเร็จ', 'success');
+    return true;
+  };
+
+  const deleteAmenity = async (amenityId: number): Promise<boolean> => {
+    if (!supabaseClient) return false;
+    await supabaseClient.from('toilet_amenities').delete().eq('amenity_id', amenityId);
+    const { error } = await supabaseClient.from('amenities').delete().eq('amenity_id', amenityId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
+    }
+    await syncFromSupabase(true);
     showToast('ลบสิ่งอำนวยความสะดวกเรียบร้อยแล้ว', 'success');
     return true;
   };
@@ -573,6 +472,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     file,
     photoDataUrl,
   }: SubmitReportInput): Promise<boolean> => {
+    if (!supabaseClient) return false;
     if (!toilet_id || !status_detail.trim()) {
       showToast('กรุณาเลือกห้องน้ำและกรอกรายละเอียดปัญหา', 'error');
       return false;
@@ -580,7 +480,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
 
     let finalPhotoUrl = photoDataUrl || '';
 
-    if (supabaseClient && file) {
+    if (file) {
       const bucket = storageBucket || 'report-photos';
       const fileName = `report_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
       const { data: uploadData, error: uploadErr } = await supabaseClient.storage
@@ -604,81 +504,59 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       photo_url: finalPhotoUrl,
     };
 
-    const mappedToiletStatus = status_type === 'ปิดทำความสะอาด' ? 'ทำความสะอาด' : 'ชำรุด';
+    const mappedToiletStatus = status_type === 'ปิดทำความสะอาด' ? 'ทำความสะอาด' : 'ปิดปรับปรุง';
 
-    if (supabaseClient) {
-      const { error } = await supabaseClient.from('reports').insert([payload]);
-      if (error) {
-        showToast('ส่งรายงานไม่สำเร็จ: ' + error.message, 'error');
-        return false;
-      }
-      await supabaseClient
-        .from('toilets')
-        .update({ status: mappedToiletStatus })
-        .eq('toilet_id', toilet_id);
-      await syncFromSupabase(true);
-    } else {
-      const newId = reports.reduce((m, x) => Math.max(m, Number(x.report_id)), 1000) + 1;
-      const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
-      setReports((prev) => [{ report_id: newId, created_at: nowStr, ...payload }, ...prev]);
-      setToilets((prev) =>
-        prev.map((t) =>
-          Number(t.toilet_id) === Number(toilet_id) ? { ...t, status: mappedToiletStatus } : t
-        )
-      );
+    const { error } = await supabaseClient.from('reports').insert([payload]);
+    if (error) {
+      showToast('ส่งรายงานไม่สำเร็จ: ' + error.message, 'error');
+      return false;
     }
+    await supabaseClient
+      .from('toilets')
+      .update({ status: mappedToiletStatus })
+      .eq('toilet_id', toilet_id);
+    await syncFromSupabase(true);
 
-    showToast('บันทึกรายงานปัญหาและรูปถ่ายเรียบร้อยแล้ว', 'success');
+    showToast('บันทึกรายงานปัญหาและรูปถ่ายลง Supabase เรียบร้อยแล้ว', 'success');
     return true;
   };
 
   const updateToiletStatus = async (toiletId: number, newStatus: string): Promise<boolean> => {
-    if (supabaseClient) {
-      const { error } = await supabaseClient
-        .from('toilets')
-        .update({ status: newStatus })
-        .eq('toilet_id', toiletId);
-      if (error) {
-        showToast(error.message, 'error');
-        return false;
-      }
-      await syncFromSupabase(true);
-    } else {
-      setToilets((prev) =>
-        prev.map((t) => (Number(t.toilet_id) === Number(toiletId) ? { ...t, status: newStatus } : t))
-      );
+    if (!supabaseClient) return false;
+    const { error } = await supabaseClient
+      .from('toilets')
+      .update({ status: newStatus })
+      .eq('toilet_id', toiletId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('อัปเดตสถานะห้องน้ำเรียบร้อยแล้ว', 'success');
     return true;
   };
 
   const deleteReport = async (reportId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      const { error } = await supabaseClient.from('reports').delete().eq('report_id', reportId);
-      if (error) {
-        showToast(error.message, 'error');
-        return false;
-      }
-      await syncFromSupabase(true);
-    } else {
-      setReports((prev) => prev.filter((r) => Number(r.report_id) !== Number(reportId)));
+    if (!supabaseClient) return false;
+    const { error } = await supabaseClient.from('reports').delete().eq('report_id', reportId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('ลบรายการแจ้งปัญหาสำเร็จ', 'success');
     return true;
   };
 
   /* --- 6. Reviews & Users --- */
   const deleteReview = async (reviewId: string | number): Promise<boolean> => {
-    if (supabaseClient) {
-      const { error } = await supabaseClient.from('reviews').delete().eq('review_id', reviewId);
-      if (error) {
-        showToast(error.message, 'error');
-        return false;
-      }
-      await syncFromSupabase(true);
-    } else {
-      setReviews((prev) => prev.filter((r) => String(r.review_id) !== String(reviewId)));
+    if (!supabaseClient) return false;
+    const { error } = await supabaseClient.from('reviews').delete().eq('review_id', reviewId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('ลบรีวิวเรียบร้อยแล้ว', 'success');
     return true;
   };
@@ -689,6 +567,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     phone,
     isAdmin,
   }: SaveUserInput): Promise<boolean> => {
+    if (!supabaseClient) return false;
     if (!display_name.trim()) {
       showToast('กรุณากรอกชื่อผู้ใช้', 'error');
       return false;
@@ -700,42 +579,30 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       phone: phone.trim(),
     };
 
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient.from('Users').insert([payload]).select();
-      if (error) {
-        showToast(error.message, 'error');
-        return false;
-      }
-      if (isAdmin && data && data[0]) {
-        await supabaseClient
-          .from('admin')
-          .insert([{ user_id: data[0].user_id, is_active: true }]);
-      }
-      await syncFromSupabase(true);
-    } else {
-      const newId = users.reduce((m, x) => Math.max(m, Number(x.user_id)), 0) + 1;
-      setUsers((prev) => [...prev, { user_id: newId, ...payload }]);
-      if (isAdmin) {
-        setAdmins((prev) => [...prev, { admin_id: Date.now(), user_id: newId, is_active: true }]);
-      }
+    const { data, error } = await supabaseClient.from('Users').insert([payload]).select();
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
     }
-
-    showToast('เพิ่มผู้ใช้งานสำเร็จ', 'success');
+    if (isAdmin && data && data[0]) {
+      await supabaseClient
+        .from('admin')
+        .insert([{ user_id: data[0].user_id, is_active: true }]);
+    }
+    await syncFromSupabase(true);
+    showToast('เพิ่มผู้ใช้งานลง Supabase สำเร็จ', 'success');
     return true;
   };
 
   const deleteUser = async (userId: number): Promise<boolean> => {
-    if (supabaseClient) {
-      await supabaseClient.from('admin').delete().eq('user_id', userId);
-      const { error } = await supabaseClient.from('Users').delete().eq('user_id', userId);
-      if (error) {
-        showToast(error.message, 'error');
-        return false;
-      }
-      await syncFromSupabase(true);
-    } else {
-      setUsers((prev) => prev.filter((u) => Number(u.user_id) !== Number(userId)));
+    if (!supabaseClient) return false;
+    await supabaseClient.from('admin').delete().eq('user_id', userId);
+    const { error } = await supabaseClient.from('Users').delete().eq('user_id', userId);
+    if (error) {
+      showToast(error.message, 'error');
+      return false;
     }
+    await syncFromSupabase(true);
     showToast('ลบผู้ใช้งานเรียบร้อยแล้ว', 'success');
     return true;
   };
@@ -784,36 +651,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       showToast('รีเซ็ตกลับไปใช้ค่าจากไฟล์ .env.local แล้ว', 'success');
     } else {
       setIsConnected(false);
-      showToast('สลับกลับเป็นโหมดข้อมูลในเครื่องแล้ว', 'success');
     }
-  };
-
-  const seedBuildingsToSupabase = async (): Promise<boolean> => {
-    if (!supabaseClient) {
-      showToast('ยังไม่ได้เชื่อมต่อ Supabase', 'error');
-      return false;
-    }
-    const { data, error } = await supabaseClient
-      .from('buildings')
-      .upsert(buildings.length > 0 ? buildings : INITIAL_BUILDINGS, { onConflict: 'building_id' })
-      .select('*')
-      .order('building_id');
-
-    if (error) {
-      setRlsBlocked(true);
-      showToast(
-        `Supabase ปฏิเสธการบันทึก (${error.code}): กรุณาปลดล็อก RLS ใน Supabase SQL Editor`,
-        'error'
-      );
-      return false;
-    }
-    if (data && data.length > 0) {
-      setBuildings(data);
-    }
-    setRlsBlocked(false);
-    await syncFromSupabase(true);
-    showToast('บันทึกรายชื่อคณะทั้งหมดลงตาราง buildings ใน Supabase สำเร็จ!', 'success');
-    return true;
   };
 
   return (
@@ -830,14 +668,12 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         reviews,
         isConnected,
         isLoading,
-        rlsBlocked,
         supabaseUrl,
         supabaseKey,
         storageBucket,
         toasts,
         showToast,
         syncFromSupabase,
-        seedBuildingsToSupabase,
         getBuildingName,
         getToiletLabel,
         saveToilet,

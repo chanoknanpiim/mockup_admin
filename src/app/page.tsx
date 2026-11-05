@@ -8,9 +8,9 @@ export default function DashboardPage() {
   const { toilets, reports, getToiletLabel } = useAdminData();
 
   const total = toilets.length;
-  const normal = toilets.filter((t) => t.status === 'ปกติ').length;
+  const normal = toilets.filter((t) => t.status === 'ใช้งานได้' || t.status === 'ปกติ').length;
   const cleaning = toilets.filter((t) => t.status === 'ทำความสะอาด').length;
-  const broken = toilets.filter((t) => t.status === 'ชำรุด').length;
+  const broken = toilets.filter((t) => t.status === 'ปิดปรับปรุง' || t.status === 'ชำรุด').length;
 
   const pNormal = total ? Math.round((normal / total) * 100) : 0;
   const pCleaning = total ? Math.round((cleaning / total) * 100) : 0;
@@ -115,11 +115,11 @@ export default function DashboardPage() {
                     const toilet = toilets.find(
                       (t) => Number(t.toilet_id) === Number(r.toilet_id)
                     );
-                    const tStatus = toilet ? toilet.status : 'ปกติ';
+                    const tStatus = toilet ? toilet.status : 'ใช้งานได้';
                     const badgeClass =
-                      tStatus === 'ปกติ'
+                      tStatus === 'ใช้งานได้' || tStatus === 'ปกติ'
                         ? 'success'
-                        : tStatus === 'ชำรุด'
+                        : tStatus === 'ปิดปรับปรุง' || tStatus === 'ชำรุด'
                         ? 'danger'
                         : 'warning';
 
