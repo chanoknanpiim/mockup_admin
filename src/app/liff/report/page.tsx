@@ -31,6 +31,102 @@ const RATING_LABELS: Record<number, string> = {
   5: 'ยอดเยี่ยม',
 };
 
+const FALLBACK_BUILDINGS: BuildingOption[] = [
+  { building_id: 8, building_name: 'วิทยาลัยนวัตกรรม' },
+  { building_id: 17, building_name: 'อาคารเรียนรวม (SC / บร.)' },
+  { building_id: 16, building_name: 'หอสมุดปรีดี พนมยงค์' },
+  { building_id: 2, building_name: 'คณะพาณิชยศาสตร์และการบัญชี' },
+  { building_id: 4, building_name: 'คณะเศรษฐศาสตร์' },
+  { building_id: 5, building_name: 'คณะศิลปศาสตร์' },
+  { building_id: 1, building_name: 'คณะนิติศาสตร์' },
+  { building_id: 15, building_name: 'โรงอาหารกลาง ท่าพระจันทร์' },
+  { building_id: 19, building_name: 'ตึกโดม (ริมน้ำเจ้าพระยา)' },
+  { building_id: 3, building_name: 'อาคารธรรมศาสตร์ 60 ปี' },
+];
+
+const FALLBACK_TOILETS: ToiletOption[] = [
+  {
+    toilet_id: 1,
+    name: 'ห้องน้ำ วิทยาลัยนวัตกรรม (CITU) / ตึกอเนกประสงค์ 2',
+    description: 'วิทยาลัยนวัตกรรม (CITU) / ตึกอเนกประสงค์ 2 ชั้น 1 โถงลิฟต์หลัก',
+    location_text: 'วิทยาลัยนวัตกรรม (CITU) / ตึกอเนกประสงค์ 2 ชั้น 1 โถงลิฟต์หลัก',
+    building_id: 8,
+    floor: 1,
+  },
+  {
+    toilet_id: 2,
+    name: 'ห้องน้ำ อาคารเรียนรวม วพ. (SC) ชั้น 1',
+    description: 'อาคารเรียนรวม วพ. (SC) ทางเดินชั้น 1 ใกล้ห้อง SC 101',
+    location_text: 'อาคารเรียนรวม วพ. (SC) ทางเดินชั้น 1 ใกล้ห้อง SC 101',
+    building_id: 17,
+    floor: 1,
+  },
+  {
+    toilet_id: 3,
+    name: 'ห้องน้ำ หอสมุดปรีดี พนมยงค์ ชั้น U1',
+    description: 'หอสมุดปรีดี พนมยงค์ ชั้นใต้ดิน U1 โซนอ่านหนังสือ',
+    location_text: 'หอสมุดปรีดี พนมยงค์ ชั้นใต้ดิน U1 โซนอ่านหนังสือ',
+    building_id: 16,
+    floor: 1,
+  },
+  {
+    toilet_id: 4,
+    name: 'ห้องน้ำ คณะพาณิชยศาสตร์และการบัญชี (TBS) ชั้น 2',
+    description: 'คณะพาณิชยศาสตร์และการบัญชี โถงบันไดกลางชั้น 2',
+    location_text: 'คณะพาณิชยศาสตร์และการบัญชี โถงบันไดกลางชั้น 2',
+    building_id: 2,
+    floor: 2,
+  },
+  {
+    toilet_id: 5,
+    name: 'ห้องน้ำ คณะเศรษฐศาสตร์ ชั้น 1',
+    description: 'คณะเศรษฐศาสตร์ ชั้น 1 ฝั่งลานจอดรถ',
+    location_text: 'คณะเศรษฐศาสตร์ ชั้น 1 ฝั่งลานจอดรถ',
+    building_id: 4,
+    floor: 1,
+  },
+  {
+    toilet_id: 6,
+    name: 'ห้องน้ำ คณะศิลปศาสตร์ ชั้น 1 (ริมน้ำ)',
+    description: 'คณะศิลปศาสตร์ ชั้น 1 ระเบียงริมแม่น้ำเจ้าพระยา',
+    location_text: 'คณะศิลปศาสตร์ ชั้น 1 ระเบียงริมแม่น้ำเจ้าพระยา',
+    building_id: 5,
+    floor: 1,
+  },
+  {
+    toilet_id: 7,
+    name: 'ห้องน้ำ คณะนิติศาสตร์ ชั้น 1',
+    description: 'คณะนิติศาสตร์ ชั้น 1 ติดห้องพยาบาล',
+    location_text: 'คณะนิติศาสตร์ ชั้น 1 ติดห้องพยาบาล',
+    building_id: 1,
+    floor: 1,
+  },
+  {
+    toilet_id: 8,
+    name: 'ห้องน้ำ โรงอาหารกลาง / อาคารกิจกรรมนักศึกษา',
+    description: 'โรงอาหารกลาง ท่าพระจันทร์ ชั้น 1 ด้านหลังร้านค้า',
+    location_text: 'โรงอาหารกลาง ท่าพระจันทร์ ชั้น 1 ด้านหลังร้านค้า',
+    building_id: 15,
+    floor: 1,
+  },
+  {
+    toilet_id: 9,
+    name: 'ห้องน้ำ ท่าพระจันทร์ / ริมแม่น้ำเจ้าพระยา',
+    description: 'จุดบริการห้องน้ำริมแม่น้ำเจ้าพระยา ท่าพระจันทร์',
+    location_text: 'จุดบริการห้องน้ำริมแม่น้ำเจ้าพระยา ท่าพระจันทร์',
+    building_id: 19,
+    floor: 1,
+  },
+  {
+    toilet_id: 10,
+    name: 'ห้องน้ำ อาคารธรรมศาสตร์ 60 ปี ชั้น 1',
+    description: 'อาคารธรรมศาสตร์ 60 ปี ชั้น 1 โถงประชุม',
+    location_text: 'อาคารธรรมศาสตร์ 60 ปี ชั้น 1 โถงประชุม',
+    building_id: 3,
+    floor: 1,
+  },
+];
+
 function cleanToiletLabel(raw: string | null | undefined): string {
   return String(raw || '').trim();
 }
@@ -40,9 +136,9 @@ export default function LiffReportAndReviewPage() {
   const { idToken, profile, isDarkMode } = useLiff();
 
   const [activeTab, setActiveTab] = useState<'review' | 'report'>('review');
-  const [toilets, setToilets] = useState<ToiletOption[]>([]);
-  const [buildings, setBuildings] = useState<BuildingOption[]>([]);
-  const [selectedToiletId, setSelectedToiletId] = useState<number>(0);
+  const [toilets, setToilets] = useState<ToiletOption[]>(FALLBACK_TOILETS);
+  const [buildings, setBuildings] = useState<BuildingOption[]>(FALLBACK_BUILDINGS);
+  const [selectedToiletId, setSelectedToiletId] = useState<number>(1);
 
   // Review state
   const [rating, setRating] = useState<number>(5);
@@ -84,18 +180,23 @@ export default function LiffReportAndReviewPage() {
   useEffect(() => {
     if (!supabase) return;
     (async () => {
-      const [tRes, bRes] = await Promise.all([
-        supabase
-          .from('toilets')
-          .select('toilet_id, name, description, location_text, building_id, floor')
-          .order('building_id', { ascending: true })
-          .order('floor', { ascending: true }),
-        supabase.from('buildings').select('building_id, building_name').order('building_id'),
-      ]);
-      const tRows = (tRes.data || []) as ToiletOption[];
-      setToilets(tRows);
-      setBuildings((bRes.data || []) as BuildingOption[]);
-      setSelectedToiletId((prev) => (prev ? prev : tRows[0]?.toilet_id || 0));
+      try {
+        const [tRes, bRes] = await Promise.all([
+          supabase
+            .from('toilets')
+            .select('toilet_id, name, description, location_text, building_id, floor')
+            .order('building_id', { ascending: true })
+            .order('floor', { ascending: true }),
+          supabase.from('buildings').select('building_id, building_name').order('building_id'),
+        ]);
+        const tRows = (tRes.data && tRes.data.length > 0 ? tRes.data : FALLBACK_TOILETS) as ToiletOption[];
+        const bRows = (bRes.data && bRes.data.length > 0 ? bRes.data : FALLBACK_BUILDINGS) as BuildingOption[];
+        setToilets(tRows);
+        setBuildings(bRows);
+        setSelectedToiletId((prev) => (prev ? prev : tRows[0]?.toilet_id || 1));
+      } catch (err) {
+        console.warn('Error fetching toilets, using fallback list:', err);
+      }
     })();
   }, [supabase]);
 

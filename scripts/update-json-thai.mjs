@@ -1,0 +1,109 @@
+import { execSync } from 'child_process';
+import { writeFileSync } from 'fs';
+
+let token = process.env.GH_TOKEN;
+if (!token) {
+  try {
+    const raw = execSync('printf "protocol=https\\nhost=github.com\\n\\n" | git credential-osxkeychain get', {
+      encoding: 'utf-8'
+    });
+    const match = raw.match(/password=([^\s]+)/);
+    if (match) token = match[1];
+  } catch (e) {}
+}
+
+const thaiIssues = [
+  {
+    number: 1,
+    title: "Phase 0: ติดตั้งสถาปัตยกรรมระบบ, LINE OA, สภาพแวดล้อม Supabase และ Vercel",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/1"
+  },
+  {
+    number: 2,
+    title: "Phase 1: ออกแบบโครงสร้างฐานข้อมูลและติดตั้งส่วนขยาย PostGIS",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/2"
+  },
+  {
+    number: 3,
+    title: "Phase 1.2: นำเข้าข้อมูลพิกัดห้องน้ำเริ่มต้น (10 อาคาร มธ. ท่าพระจันทร์)",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/3"
+  },
+  {
+    number: 4,
+    title: "Phase 2: พัฒนา Edge Function line-webhook และ LINE Messaging API",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/4"
+  },
+  {
+    number: 5,
+    title: "Phase 3: พัฒนาเว็บแอปพลิเคชันฝั่งผู้ใช้ (LIFF) ด้วยแผนที่ Leaflet",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/5"
+  },
+  {
+    number: 6,
+    title: "Phase 4: สร้างระบบแดชบอร์ดผู้ดูแลระบบ (Next.js + Supabase Auth)",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/6"
+  },
+  {
+    number: 7,
+    title: "การแก้ไข: ปิดระบบ Deployment Protection ของ Vercel และเชื่อมต่อ Production Domain",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/7"
+  },
+  {
+    number: 8,
+    title: "การปรับปรุง: ปรับพิกัด 10 อาคารให้ตรงกับ Google Maps จริง และจำกัดระยะค้นหา (1 กม.)",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/8"
+  },
+  {
+    number: 9,
+    title: "การปรับปรุง: ระบบ Deep Link (?toiletId) และหน้าต่างสรุปข้อมูล (Bottom Sheet Modal)",
+    column: "เสร็จสิ้น (Done)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/9"
+  },
+  {
+    number: 10,
+    title: "เอกสารรายงาน: จัดทำรายงานโครงงานฉบับสมบูรณ์ 9 หัวข้อ (8-15 หน้า A4) [สมาชิก 3 คน]",
+    column: "กำลังดำเนินการ (In Progress)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/10"
+  },
+  {
+    number: 11,
+    title: "การนำเสนอ: จัดทำสไลด์สรุปสำหรับนำเสนอสดในคาบเรียนที่ 15",
+    column: "กำลังดำเนินการ (In Progress)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/11"
+  },
+  {
+    number: 12,
+    title: "Phase 5: ทดสอบการทำงานทั้งระบบจากต้นทางถึงปลายทาง (End-to-End Testing)",
+    column: "กำลังดำเนินการ (In Progress)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/12"
+  },
+  {
+    number: 13,
+    title: "Phase 6.1: ตั้งค่าริชเมนูบน LINE OA และสลับโหมดตอบกลับเป็นบอต",
+    column: "กำลังดำเนินการ (In Progress)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/13"
+  },
+  {
+    number: 14,
+    title: "Phase 6.2: การทดสอบการยอมรับของผู้ใช้ (UAT) กับกลุ่มตัวอย่าง 10-20 คนในมหาวิทยาลัย",
+    column: "รอดำเนินการ (Todo)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/14"
+  },
+  {
+    number: 15,
+    title: "การประเมินตนเอง: จัดทำบันทึกการสะท้อนตนเองรายบุคคลสำหรับส่งอาจารย์",
+    column: "รอดำเนินการ (Todo)",
+    url: "https://github.com/chanoknanpiim/mockup_admin/issues/15"
+  }
+];
+
+writeFileSync('/Users/carbo/Desktop/ปี2เทอม1/DX212/mock up/admin/scripts/created-issues.json', JSON.stringify(thaiIssues, null, 2), 'utf-8');
+console.log('Updated created-issues.json with Thai metadata.');

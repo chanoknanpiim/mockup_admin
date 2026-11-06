@@ -12,7 +12,7 @@ import {
   NearbyToiletRow,
 } from './flex.ts';
 
-const SEARCH_RADII_M = [300, 500, 1000, 3000] as const;
+const SEARCH_RADII_M = [300, 500] as const;
 const MAX_CAROUSEL_CARDS = 12;
 
 export const THA_PRACHAN_CENTER = {
@@ -231,7 +231,7 @@ Deno.serve(async (req: Request) => {
       continue;
     }
 
-    // 2. Location Message Event -> Limit search to within 1,000m of Thammasat Tha Prachan campus
+    // 2. Location Message Event -> Strict Geofencing (1.5km cutoff from Thammasat & 500m strict radius)
     if (event.type === 'message' && event.message?.type === 'location' && replyToken) {
       const lat = Number(event.message.latitude);
       const lng = Number(event.message.longitude);
@@ -245,15 +245,15 @@ Deno.serve(async (req: Request) => {
       const roundedLat = roundCoord3(lat);
       const roundedLng = roundCoord3(lng);
 
-      // If user's distance is greater than 1,000 meters from Thammasat center
-      if (distFromCampus > 1000) {
+      // If user's distance is greater than 1,500 meters (1.5 km) from Thammasat center
+      if (distFromCampus > 1500) {
         await supabaseAdmin.from('search_logs').insert([
           {
             line_user_id: hashedUserId,
             source: 'line_webhook',
             search_lat: roundedLat,
             search_lng: roundedLng,
-            radius_m: 1000,
+            radius_m: 1500,
             results_count: 0,
             filters: {},
           },
@@ -264,14 +264,14 @@ Deno.serve(async (req: Request) => {
           [
             {
               type: 'text',
-              text: 'ขออภัยครับ ขณะนี้คุณอยู่นอกพื้นที่ให้บริการ (ระบบรองรับเฉพาะพื้นที่ มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์ ในรัศมี 500-1,000 เมตร) คุณสามารถกดเปิดดูแผนที่ภาพรวมทั้งหมดได้ที่นี่ 👇',
+              text: 'ขออภัยครับ ขณะนี้คุณอยู่นอกพื้นที่ให้บริการ 📍 ระบบรองรับเฉพาะพื้นที่ มหาวิทยาลัยธรรมศาสตร์ ท่าพระจันทร์ เท่านั้นครับ คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
               quickReply: {
                 items: [
                   {
                     type: 'action',
                     action: {
                       type: 'uri',
-                      label: 'เปิดแผนที่ทั้งหมด',
+                      label: '🗺️ เปิดแผนที่ภาพรวม',
                       uri: `https://liff.line.me/${liffId}`,
                     },
                   },
@@ -279,7 +279,7 @@ Deno.serve(async (req: Request) => {
                     type: 'action',
                     action: {
                       type: 'location',
-                      label: 'ส่งตำแหน่งใหม่',
+                      label: '📍 ส่งตำแหน่งใหม่',
                     },
                   },
                 ],
@@ -291,13 +291,16 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      // Within 1,000m of Thammasat Tha Prachan campus
+      // Within 1.5km of campus -> Search with strict radius <= 500m
       const { toilets, usedRadiusM } = await searchWithExpandingRadius(
         supabaseAdmin,
         lat,
         lng,
         {}
       );
+
+      // Strict filter: only toilets within 500 meters
+      const strictToilets = toilets.filter((t) => t.distance_m <= 500);
 
       await supabaseAdmin.from('search_logs').insert([
         {
@@ -306,25 +309,25 @@ Deno.serve(async (req: Request) => {
           search_lat: roundedLat,
           search_lng: roundedLng,
           radius_m: usedRadiusM,
-          results_count: toilets.length,
+          results_count: strictToilets.length,
           filters: {},
         },
       ]);
 
-      if (toilets.length === 0) {
+      if (strictToilets.length === 0) {
         await replyToLine(
           replyToken,
           [
             {
               type: 'text',
-              text: 'ขออภัยครับ ไม่พบห้องน้ำที่เปิดใช้งานในรัศมีที่กำหนดรอบตำแหน่งของคุณ คุณสามารถกดเปิดดูแผนที่ภาพรวมทั้งหมดได้ที่นี่ 👇',
+              text: 'ขออภัยครับ ไม่พบห้องน้ำ มธ. ท่าพระจันทร์ ในระยะใกล้ตัวคุณ (รัศมี 500 ม.) 📍 คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
               quickReply: {
                 items: [
                   {
                     type: 'action',
                     action: {
                       type: 'uri',
-                      label: 'เปิดแผนที่ทั้งหมด',
+                      label: '🗺️ เปิดแผนที่ภาพรวม',
                       uri: `https://liff.line.me/${liffId}`,
                     },
                   },
@@ -332,7 +335,7 @@ Deno.serve(async (req: Request) => {
                     type: 'action',
                     action: {
                       type: 'location',
-                      label: 'ส่งตำแหน่งใหม่',
+                      label: '📍 ส่งตำแหน่งใหม่',
                     },
                   },
                 ],
@@ -342,7 +345,7 @@ Deno.serve(async (req: Request) => {
           channelAccessToken
         );
       } else {
-        const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
+        const flexMsg = buildNearbyToiletsCarouselMessage(strictToilets, {
           appBaseUrl,
           liffId,
           activeRadiusM: usedRadiusM,
@@ -385,7 +388,7 @@ Deno.serve(async (req: Request) => {
         const lng = Number(lastLocation.search_lng);
         const dist = calculateHaversineM(lat, lng, THA_PRACHAN_CENTER.lat, THA_PRACHAN_CENTER.lng);
 
-        if (dist <= 1000) {
+        if (dist <= 1500) {
           const { toilets, usedRadiusM } = await searchWithExpandingRadius(
             supabaseAdmin,
             lat,
@@ -393,8 +396,10 @@ Deno.serve(async (req: Request) => {
             filtersJson
           );
 
-          if (toilets.length > 0) {
-            const flexMsg = buildNearbyToiletsCarouselMessage(toilets, {
+          const strictToilets = toilets.filter((t) => t.distance_m <= 500);
+
+          if (strictToilets.length > 0) {
+            const flexMsg = buildNearbyToiletsCarouselMessage(strictToilets, {
               appBaseUrl,
               liffId,
               activeRadiusM: usedRadiusM,
