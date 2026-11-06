@@ -4,7 +4,7 @@
     "height": 1686
   },
   "selected": true,
-  "name": "PlodPloi Main Rich Menu",
+  "name": "PlodPloi Main Rich Menu v2",
   "chatBarText": "เมนูหลัก",
   "areas": [
     {
@@ -15,8 +15,9 @@
         "height": 1686
       },
       "action": {
-        "type": "location",
-        "label": "หาห้องน้ำใกล้ฉัน"
+        "type": "uri",
+        "label": "แจ้งปัญหาและรีวิว",
+        "uri": "https://liff.line.me/2012397593-ADI98PZS?tab=report"
       }
     },
     {
@@ -27,9 +28,8 @@
         "height": 1686
       },
       "action": {
-        "type": "uri",
-        "label": "เปิดแผนที่ LIFF",
-        "uri": "https://liff.line.me/2012397593-ADI98PZS"
+        "type": "location",
+        "label": "หาห้องน้ำใกล้ฉัน"
       }
     },
     {
@@ -40,10 +40,9 @@
         "height": 1686
       },
       "action": {
-        "type": "postback",
+        "type": "message",
         "label": "กรองห้องน้ำ",
-        "data": "action=filter&filter=all",
-        "displayText": "กรองห้องน้ำ"
+        "text": "กรองห้องน้ำ"
       }
     }
   ]
