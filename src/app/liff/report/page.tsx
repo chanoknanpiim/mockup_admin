@@ -235,7 +235,7 @@ export default function LiffReportAndReviewPage() {
     if (!idToken) {
       setFeedback({
         type: 'error',
-        message: 'ไม่พบ LIFF ID Token กรุณาเปิดผ่านแอป LINE (หรือรันบน localhost ในโหมดพัฒนา)',
+        message: 'กรุณาเปิดผ่านแอป LINE เพื่อส่งข้อมูลรีวิว/แจ้งซ่อม',
       });
       return;
     }

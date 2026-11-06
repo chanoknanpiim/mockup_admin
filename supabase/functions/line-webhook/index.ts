@@ -12,7 +12,8 @@ import {
   NearbyToiletRow,
 } from './flex.ts';
 
-const SEARCH_RADII_M = [300, 500] as const;
+const SEARCH_RADII_M = [150] as const;
+const STRICT_NEARBY_RADIUS_M = 150;
 const MAX_CAROUSEL_CARDS = 12;
 
 export const THA_PRACHAN_CENTER = {
@@ -291,7 +292,7 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      // Within 1.5km of campus -> Search with strict radius <= 500m
+      // Within 1.5km of campus -> Search with strict radius <= 150m
       const { toilets, usedRadiusM } = await searchWithExpandingRadius(
         supabaseAdmin,
         lat,
@@ -299,8 +300,10 @@ Deno.serve(async (req: Request) => {
         {}
       );
 
-      // Strict filter: only toilets within 500 meters
-      const strictToilets = toilets.filter((t) => t.distance_m <= 500);
+      // Strict filter: only toilets within 150 meters, sorted ascending by distance
+      const strictToilets = toilets
+        .filter((t) => t.distance_m <= STRICT_NEARBY_RADIUS_M)
+        .sort((a, b) => a.distance_m - b.distance_m);
 
       await supabaseAdmin.from('search_logs').insert([
         {
@@ -308,7 +311,7 @@ Deno.serve(async (req: Request) => {
           source: 'line_webhook',
           search_lat: roundedLat,
           search_lng: roundedLng,
-          radius_m: usedRadiusM,
+          radius_m: STRICT_NEARBY_RADIUS_M,
           results_count: strictToilets.length,
           filters: {},
         },
@@ -320,7 +323,7 @@ Deno.serve(async (req: Request) => {
           [
             {
               type: 'text',
-              text: 'ขออภัยครับ ไม่พบห้องน้ำ มธ. ท่าพระจันทร์ ในระยะใกล้ตัวคุณ (รัศมี 500 ม.) 📍 คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
+              text: 'ขออภัยครับ ไม่พบห้องน้ำ มธ. ท่าพระจันทร์ ในระยะใกล้ตัวคุณ (รัศมี 150 ม.) 📍 คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
               quickReply: {
                 items: [
                   {
@@ -348,7 +351,7 @@ Deno.serve(async (req: Request) => {
         const flexMsg = buildNearbyToiletsCarouselMessage(strictToilets, {
           appBaseUrl,
           liffId,
-          activeRadiusM: usedRadiusM,
+          activeRadiusM: STRICT_NEARBY_RADIUS_M,
           activeFilterLabel: null,
         });
         await replyToLine(replyToken, [flexMsg], channelAccessToken);
@@ -358,11 +361,20 @@ Deno.serve(async (req: Request) => {
 
     // 3. Postback Event (Rich Menu Button "กรองห้องน้ำ" or Quick Reply filter chips)
     if (event.type === 'postback' && replyToken) {
-      const params = new URLSearchParams(event.postback?.data || '');
-      const filterKey = params.get('filter') || 'all';
+      const postbackData = String(event.postback?.data || '').trim();
+      const params = new URLSearchParams(postbackData);
+      const action = params.get('action');
+      const filterKey = params.get('filter');
 
-      // If user tapped "กรองห้องน้ำ" (action=filter), send the interactive filter card
-      if (filterKey === 'all' || params.get('action') === 'filter') {
+      // If user tapped "กรองห้องน้ำ" (action=filter, postback contains filter or กรอง)
+      if (
+        action === 'filter' ||
+        postbackData.includes('action=filter') ||
+        postbackData.includes('กรอง') ||
+        postbackData.toLowerCase().includes('filter') ||
+        filterKey === 'all' ||
+        !filterKey
+      ) {
         await replyToLine(
           replyToken,
           [buildFilterSelectionFlexMessage(liffId)],
@@ -373,7 +385,7 @@ Deno.serve(async (req: Request) => {
 
       const { filtersJson, filterLabel } = parseFilterKey(filterKey);
 
-      // Check if user has a recent search location within 1,000m
+      // Check if user has a recent search location within 1,500m
       const { data: lastLogs } = await supabaseAdmin
         .from('search_logs')
         .select('search_lat, search_lng')
@@ -396,13 +408,15 @@ Deno.serve(async (req: Request) => {
             filtersJson
           );
 
-          const strictToilets = toilets.filter((t) => t.distance_m <= 500);
+          const strictToilets = toilets
+            .filter((t) => t.distance_m <= STRICT_NEARBY_RADIUS_M)
+            .sort((a, b) => a.distance_m - b.distance_m);
 
           if (strictToilets.length > 0) {
             const flexMsg = buildNearbyToiletsCarouselMessage(strictToilets, {
               appBaseUrl,
               liffId,
-              activeRadiusM: usedRadiusM,
+              activeRadiusM: STRICT_NEARBY_RADIUS_M,
               activeFilterLabel: filterLabel || 'มธ. ท่าพระจันทร์',
             });
             await replyToLine(replyToken, [flexMsg], channelAccessToken);
@@ -411,7 +425,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // If no valid recent campus location, send the filter selection card
+      // If no valid recent campus location within 150m, send the filter selection card
       await replyToLine(
         replyToken,
         [buildFilterSelectionFlexMessage(liffId)],
@@ -424,12 +438,17 @@ Deno.serve(async (req: Request) => {
     if (event.type === 'message' && event.message?.type === 'text' && replyToken) {
       const text = String(event.message.text || '').trim();
 
-      if (text.includes('กรอง')) {
+      if (
+        text.includes('กรอง') ||
+        text.toLowerCase().includes('filter') ||
+        text === 'กรองห้องน้ำ'
+      ) {
         await replyToLine(
           replyToken,
           [buildFilterSelectionFlexMessage(liffId)],
           channelAccessToken
         );
+        continue;
       } else {
         await replyToLine(
           replyToken,

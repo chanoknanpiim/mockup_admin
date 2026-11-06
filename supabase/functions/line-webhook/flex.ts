@@ -645,7 +645,7 @@ export function buildFilterSelectionFlexMessage(liffId?: string) {
                 action: {
                   type: 'uri',
                   label: 'ห้องน้ำคนพิการ',
-                  uri: `${mapUrl}?filter=has_disabled_access`,
+                  uri: `${mapUrl}?filter=accessible`,
                 },
               },
               {
@@ -655,7 +655,7 @@ export function buildFilterSelectionFlexMessage(liffId?: string) {
                 action: {
                   type: 'uri',
                   label: 'มีสายฉีดชำระ',
-                  uri: `${mapUrl}?filter=has_bidet`,
+                  uri: `${mapUrl}?filter=bidet`,
                 },
               },
               {
@@ -685,7 +685,7 @@ export function buildFilterSelectionFlexMessage(liffId?: string) {
             color: PRIMARY,
             action: {
               type: 'uri',
-              label: 'ดูทั้งหมดบนแผนที่ LIFF',
+              label: 'ดูทั้งหมดบนแผนที่',
               uri: mapUrl,
             },
           },

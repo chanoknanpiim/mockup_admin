@@ -130,8 +130,8 @@ function LiffMobileFrame({ children }: { children: React.ReactNode }) {
               PLODPLOI
             </div>
             <div style={{ fontSize: '11px', color: '#C7D2FE', marginTop: '1px' }}>
-              {isInLineClient
-                ? `LINE LIFF • ${profile?.displayName || 'ผู้ใช้งาน'}`
+              {profile?.displayName
+                ? `มธ. ท่าพระจันทร์ | ${profile.displayName}`
                 : 'มธ. ท่าพระจันทร์ • แผนที่ห้องน้ำใกล้ฉัน'}
             </div>
           </div>

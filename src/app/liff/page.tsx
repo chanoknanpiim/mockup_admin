@@ -277,17 +277,26 @@ export default function LiffMapPage() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
 
-    // 1. Deep link to report tab: tab=report
+    // 1. Deep link to report tab: tab=report or tab=review
     const tab = params.get('tab');
-    if (tab === 'report') {
-      router.replace('/liff/report');
+    if (tab === 'report' || tab === 'review') {
+      const extraTid = params.get('toilet_id') || params.get('toiletId');
+      router.replace(`/liff/report?tab=${tab}${extraTid ? `&toilet_id=${extraTid}` : ''}`);
       return;
     }
 
-    // 2. Query filter
-    const f = params.get('filter') as FilterKey | null;
-    if (f && ['all', 'has_disabled_access', 'has_bidet', 'sanitary'].includes(f)) {
-      setActiveFilter(f);
+    // 2. Query filter (supports aliases: accessible, bidet, sanitary, has_disabled_access, has_bidet)
+    const rawFilter = params.get('filter');
+    if (rawFilter) {
+      if (rawFilter === 'accessible' || rawFilter === 'disabled' || rawFilter === 'has_disabled_access') {
+        setActiveFilter('has_disabled_access');
+      } else if (rawFilter === 'bidet' || rawFilter === 'has_bidet') {
+        setActiveFilter('has_bidet');
+      } else if (rawFilter === 'sanitary') {
+        setActiveFilter('sanitary');
+      } else if (rawFilter === 'all') {
+        setActiveFilter('all');
+      }
     }
 
     // 3. Deep link to toilet: toiletId or toilet_id
