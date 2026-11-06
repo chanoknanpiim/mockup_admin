@@ -12,8 +12,8 @@ import {
   NearbyToiletRow,
 } from './flex.ts';
 
-const SEARCH_RADII_M = [150] as const;
-const STRICT_NEARBY_RADIUS_M = 150;
+const SEARCH_RADII_M = [350] as const;
+const STRICT_NEARBY_RADIUS_M = 350;
 const MAX_CAROUSEL_CARDS = 12;
 
 export const THA_PRACHAN_CENTER = {
@@ -292,7 +292,7 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      // Within 1.5km of campus -> Search with strict radius <= 150m
+      // Within 1.5km of campus -> Search with strict radius <= 350m
       const { toilets, usedRadiusM } = await searchWithExpandingRadius(
         supabaseAdmin,
         lat,
@@ -300,7 +300,7 @@ Deno.serve(async (req: Request) => {
         {}
       );
 
-      // Strict filter: only toilets within 150 meters, sorted ascending by distance
+      // Strict filter: only toilets within 350 meters, sorted ascending by distance
       const strictToilets = toilets
         .filter((t) => t.distance_m <= STRICT_NEARBY_RADIUS_M)
         .sort((a, b) => a.distance_m - b.distance_m);
@@ -323,7 +323,7 @@ Deno.serve(async (req: Request) => {
           [
             {
               type: 'text',
-              text: 'ขออภัยครับ ไม่พบห้องน้ำ มธ. ท่าพระจันทร์ ในระยะใกล้ตัวคุณ (รัศมี 150 ม.) 📍 คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
+              text: 'ขออภัยครับ ไม่พบห้องน้ำ มธ. ท่าพระจันทร์ ในระยะใกล้ตัวคุณ (รัศมี 350 ม.) 📍 คุณสามารถกดเปิดดูแผนที่ภาพรวมของมหาวิทยาลัยได้ที่ปุ่มด้านล่างนี้',
               quickReply: {
                 items: [
                   {
@@ -425,7 +425,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // If no valid recent campus location within 150m, send the filter selection card
+      // If no valid recent campus location within 350m, send the filter selection card
       await replyToLine(
         replyToken,
         [buildFilterSelectionFlexMessage(liffId)],

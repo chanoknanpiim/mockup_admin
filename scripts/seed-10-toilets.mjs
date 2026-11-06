@@ -5,15 +5,15 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishabl
 
 const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const REAL_TOILETS_DATA = [
+export const EXACT_10_TOILETS = [
   {
     toilet_id: 1,
     name: 'ห้องน้ำ วิทยาลัยนวัตกรรม (CITU) / ตึกอเนกประสงค์ 2',
     building_id: 8,
     floor: 1,
     location_text: 'วิทยาลัยนวัตกรรม (CITU) / ตึกอเนกประสงค์ 2 ชั้น 1 โถงลิฟต์หลัก',
-    location_lat: 13.7570,
-    location_lng: 100.4912,
+    location_lat: 13.75705,
+    location_lng: 100.49120,
     toilet_type: 'ห้องน้ำรวม',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -28,8 +28,8 @@ const REAL_TOILETS_DATA = [
     building_id: 17,
     floor: 1,
     location_text: 'อาคารเรียนรวม วพ. (SC) ทางเดินชั้น 1 ใกล้ห้อง SC 101',
-    location_lat: 13.7562,
-    location_lng: 100.4905,
+    location_lat: 13.75620,
+    location_lng: 100.49050,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -40,12 +40,12 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 3,
-    name: 'ห้องน้ำ หอสมุดปรีดี พนมยงค์ ชั้น U1',
+    name: 'ห้องน้ำ หอสมุดปรีดี พนมยงค์ (ใต้ลานโพธิ์)',
     building_id: 16,
     floor: 1,
-    location_text: 'หอสมุดปรีดี พนมยงค์ ชั้นใต้ดิน U1 โซนอ่านหนังสือ',
-    location_lat: 13.7558,
-    location_lng: 100.4922,
+    location_text: 'หอสมุดปรีดี พนมยงค์ ชั้นใต้ดิน U1 โซนอ่านหนังสือ (ใต้ลานโพธิ์)',
+    location_lat: 13.75585,
+    location_lng: 100.49180,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -56,12 +56,12 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 4,
-    name: 'ห้องน้ำ คณะพาณิชยศาสตร์และการบัญชี (TBS) ชั้น 2',
+    name: 'ห้องน้ำ คณะพาณิชยศาสตร์และการบัญชี (TBS)',
     building_id: 2,
     floor: 2,
     location_text: 'คณะพาณิชยศาสตร์และการบัญชี โถงบันไดกลางชั้น 2',
-    location_lat: 13.7550,
-    location_lng: 100.4925,
+    location_lat: 13.75510,
+    location_lng: 100.49190,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -72,12 +72,12 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 5,
-    name: 'ห้องน้ำ คณะเศรษฐศาสตร์ ชั้น 1',
+    name: 'ห้องน้ำ คณะเศรษฐศาสตร์ (อาคารริมน้ำ)',
     building_id: 4,
     floor: 1,
-    location_text: 'คณะเศรษฐศาสตร์ ชั้น 1 ติดลานกิจกรรม',
-    location_lat: 13.7548,
-    location_lng: 100.4915,
+    location_text: 'คณะเศรษฐศาสตร์ ชั้น 1 อาคารริมน้ำ ติดลานกิจกรรม',
+    location_lat: 13.75480,
+    location_lng: 100.49080,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -88,12 +88,12 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 6,
-    name: 'ห้องน้ำ คณะศิลปศาสตร์ ชั้น 1 (ริมน้ำ)',
+    name: 'ห้องน้ำ คณะศิลปศาสตร์ (อาคารริมแม่น้ำเจ้าพระยา)',
     building_id: 5,
     floor: 1,
     location_text: 'คณะศิลปศาสตร์ โถงชั้น 1 ทางออกริมน้ำเจ้าพระยา',
-    location_lat: 13.7555,
-    location_lng: 100.4908,
+    location_lat: 13.75550,
+    location_lng: 100.49050,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -104,12 +104,12 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 7,
-    name: 'ห้องน้ำ คณะนิติศาสตร์ ชั้น 1',
+    name: 'ห้องน้ำ คณะนิติศาสตร์ (ตึกติดกำแพงด้านหน้าพระธาตุ)',
     building_id: 1,
     floor: 1,
-    location_text: 'คณะนิติศาสตร์ ข้างบันไดหลักชั้น 1',
-    location_lat: 13.7565,
-    location_lng: 100.4930,
+    location_text: 'คณะนิติศาสตร์ ตึกติดกำแพงด้านหน้าพระธาตุ ข้างบันไดหลักชั้น 1',
+    location_lat: 13.75660,
+    location_lng: 100.49250,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -124,8 +124,8 @@ const REAL_TOILETS_DATA = [
     building_id: 15,
     floor: 1,
     location_text: 'โรงอาหารกลาง / อาคารกิจกรรมนักศึกษา ติดริมทางเดิน',
-    location_lat: 13.7568,
-    location_lng: 100.4918,
+    location_lat: 13.75685,
+    location_lng: 100.49160,
     toilet_type: 'ห้องน้ำรวม',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -136,28 +136,28 @@ const REAL_TOILETS_DATA = [
   },
   {
     toilet_id: 9,
-    name: 'ห้องน้ำ ท่าพระจันทร์ / ริมแม่น้ำเจ้าพระยา',
+    name: 'ห้องน้ำ อาคารอเนกประสงค์ 1 (ตรงข้ามหอประชุมใหญ่)',
     building_id: 19,
     floor: 1,
-    location_text: 'จุดบริการริมแม่น้ำเจ้าพระยา ท่าเรือท่าพระจันทร์',
-    location_lat: 13.7552,
-    location_lng: 100.4898,
+    location_text: 'อาคารอเนกประสงค์ 1 (ตรงข้ามหอประชุมใหญ่) โถงชั้น 1',
+    location_lat: 13.75630,
+    location_lng: 100.49220,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
     has_disabled_access: true,
-    facilities: ['สายฉีดชำระ', 'ห้องน้ำผู้พิการ', 'กระดาษชำระ'],
+    facilities: ['สายฉีดชำระ', 'ห้องน้ำผู้พิการ', 'กระดาษชำระ', 'สบู่เหลว'],
     open_hours: { open: '08:30', close: '19:00' },
     avg_rating: 4.70,
   },
   {
     toilet_id: 10,
-    name: 'ห้องน้ำ อาคารธรรมศาสตร์ 60 ปี ชั้น 1',
+    name: 'ห้องน้ำ อาคารธรรมศาสตร์ 60 ปี (ริมแม่น้ำเจ้าพระยาฝั่งใต้)',
     building_id: 3,
     floor: 1,
-    location_text: 'อาคารธรรมศาสตร์ 60 ปี โถงทางเข้าชั้น 1',
-    location_lat: 13.7540,
-    location_lng: 100.4910,
+    location_text: 'อาคารธรรมศาสตร์ 60 ปี (ริมแม่น้ำเจ้าพระยาฝั่งใต้) โถงทางเข้าชั้น 1',
+    location_lat: 13.75420,
+    location_lng: 100.49080,
     toilet_type: 'แยกเพศ',
     status: 'ใช้งานได้',
     has_bidet: true,
@@ -180,8 +180,8 @@ async function run() {
   }
   console.log('Admin Auth Success!');
 
-  console.log('\n2. Upserting 10 real toilets with Google Maps coordinates...');
-  for (const t of REAL_TOILETS_DATA) {
+  console.log('\n2. Updating 10 Thammasat toilets with exact campus coordinates...');
+  for (const t of EXACT_10_TOILETS) {
     const toiletPayload = {
       toilet_id: t.toilet_id,
       name: t.name,
@@ -208,13 +208,17 @@ async function run() {
   }
 
   console.log('\n3. Verifying updated toilets in Supabase...');
-  const { data: verifyList } = await client
+  const { data: verifyList, error: listErr } = await client
     .from('toilets')
     .select('toilet_id, name, location_lat, location_lng, status')
     .order('toilet_id');
 
-  console.log(verifyList);
-  console.log('\nSUCCESS: All 10 Thammasat toilets have been updated with exact Google Maps coordinates!');
+  if (listErr) {
+    console.error('Verify error:', listErr.message);
+  } else {
+    console.log(verifyList);
+  }
+  console.log('\nSUCCESS: All 10 Thammasat toilets updated with exact coordinates!');
 }
 
 run();
