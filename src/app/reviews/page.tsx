@@ -113,7 +113,28 @@ export default function ReviewsPage() {
                         <strong style={{ color: '#1E293B' }}>{getToiletLabel(rev.toilet_id)}</strong>
                       </td>
                       <td style={{ fontSize: '13px', color: '#475569' }}>
-                        {u ? u.display_name : 'ผู้ใช้งาน LIFF'}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontWeight: 600, color: '#1E293B' }}>
+                            {rev.line_display_name || u?.display_name || 'ผู้ใช้งาน LINE'}
+                          </span>
+                          {rev.is_anonymous && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                width: 'fit-content',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: '#D97706',
+                                backgroundColor: '#FEF3C7',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                border: '1px solid #FCD34D',
+                              }}
+                            >
+                              (ซ่อนชื่อจากสาธารณะ)
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

@@ -445,6 +445,28 @@ export default function ReportsPage() {
                 <strong style={{ fontSize: '14px', color: '#1E293B' }}>{getToiletLabel(detailReport.toilet_id)}</strong>
               </div>
 
+              <div style={{ padding: '12px', backgroundColor: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '12px', color: '#64748B' }}>ผู้แจ้งเรื่อง (แอดมินเห็นชื่อจริงเสมอ)</div>
+                <div style={{ fontSize: '13px', color: '#1E293B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span>{detailReport.line_display_name || 'ผู้ใช้งาน LINE'}</span>
+                  {detailReport.is_anonymous && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#D97706',
+                        backgroundColor: '#FEF3C7',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #FCD34D',
+                      }}
+                    >
+                      (ซ่อนชื่อจากสาธารณะ)
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <div style={{ fontSize: '12px', color: '#64748B' }}>ประเภทปัญหาที่พบ</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>

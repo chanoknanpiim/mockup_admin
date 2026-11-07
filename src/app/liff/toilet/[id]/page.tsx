@@ -32,6 +32,8 @@ interface ReviewRow {
   created_at?: string | null;
   rating: number;
   review_text?: string | null;
+  line_display_name?: string | null;
+  is_anonymous?: boolean | null;
 }
 
 interface PhotoRow {
@@ -124,7 +126,7 @@ export default function LiffToiletDetailPage() {
             : Promise.resolve({ data: null }),
           supabase
             .from('reviews')
-            .select('review_id, created_at, rating, review_text')
+            .select('review_id, created_at, rating, review_text, line_display_name, is_anonymous')
             .eq('toilet_id', toiletId)
             .order('created_at', { ascending: false }),
           supabase
@@ -515,6 +517,7 @@ export default function LiffToiletDetailPage() {
                   {rev.rating}/5)
                 </span>
                 <span style={{ color: subText, fontSize: '11px' }}>
+                  {rev.is_anonymous ? 'ผู้ใช้งานไม่ประสงค์ออกนาม' : (rev.line_display_name || 'ผู้ใช้งาน LINE')} •{' '}
                   {rev.created_at
                     ? new Date(rev.created_at).toLocaleDateString('th-TH')
                     : ''}

@@ -62,6 +62,8 @@ export interface ReportItem {
   status_detail?: string | null;
   photo_url?: string | null;
   line_user_id?: string | null;
+  line_display_name?: string | null;
+  is_anonymous?: boolean | null;
   resolution_status?: string | null;
   resolved_at?: string | null;
 }
@@ -73,6 +75,9 @@ export interface ReviewItem {
   user_id?: number | null;
   rating: number;
   review_text?: string | null;
+  line_user_id?: string | null;
+  line_display_name?: string | null;
+  is_anonymous?: boolean | null;
 }
 
 export interface ToiletPhoto {
