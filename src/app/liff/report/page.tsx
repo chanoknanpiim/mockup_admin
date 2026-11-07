@@ -210,22 +210,16 @@ export default function LiffReportAndReviewPage() {
     const file = e.target.files?.[0];
     if (!file) {
       setPhotoFile(null);
-      setPhotoDataUrl('');
       setPhotoName('');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setFeedback({ type: 'error', message: 'ขนาดไฟล์รูปภาพต้องไม่เกิน 5 MB' });
+    if (file.size > 10 * 1024 * 1024) {
+      setFeedback({ type: 'error', message: 'ขนาดไฟล์รูปภาพต้องไม่เกิน 10 MB' });
       e.target.value = '';
       return;
     }
     setPhotoFile(file);
     setPhotoName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoDataUrl(String(reader.result || ''));
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -237,7 +231,15 @@ export default function LiffReportAndReviewPage() {
       return;
     }
 
-    // Refresh/obtain LINE profile and token if not yet loaded in context
+    if (!supabase) {
+      setFeedback({
+        type: 'error',
+        message: 'ไม่สามารถเชื่อมต่อฐานข้อมูล Supabase ได้ กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้ง',
+      });
+      return;
+    }
+
+    // Refresh / obtain LINE profile
     let activeProfile = profile;
     let activeToken = idToken;
 
@@ -254,138 +256,131 @@ export default function LiffReportAndReviewPage() {
       }
     }
 
-    const lineUserId = activeProfile?.userId || profile?.userId || '';
-    const lineDisplayName = activeProfile?.displayName || profile?.displayName || '';
-
-    // If neither idToken nor lineUserId is present
-    if (!activeToken && !lineUserId) {
-      setFeedback({
-        type: 'error',
-        message: 'กรุณาเปิดผ่านแอป LINE เพื่อส่งข้อมูลรีวิว/แจ้งซ่อม',
-      });
-      return;
-    }
+    const lineUserId = activeProfile?.userId || profile?.userId || 'ANON_LIFF_USER';
+    const lineDisplayName = activeProfile?.displayName || profile?.displayName || 'ผู้ใช้งาน LINE';
 
     setIsSubmitting(true);
-    try {
-      // 1. Upload photo directly to Supabase Storage if file is present
-      let uploadedPhotoUrl: string | null = null;
-      if (photoFile && supabase) {
-        try {
-          const fileExt = photoFile.name.split('.').pop() || 'jpg';
-          const filePath = `reviews/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-          const { error: upErr } = await supabase.storage
-            .from('toilet-photos')
-            .upload(filePath, photoFile, {
-              contentType: photoFile.type || 'image/jpeg',
-              upsert: false,
-            });
 
-          if (!upErr) {
-            const { data: pubData } = supabase.storage.from('toilet-photos').getPublicUrl(filePath);
-            uploadedPhotoUrl = pubData.publicUrl;
-          } else {
-            console.warn('Direct client upload warning, will fallback to dataUrl in API:', upErr.message);
-          }
-        } catch (upEx) {
-          console.warn('Direct storage upload exception:', upEx);
-        }
-      }
+    // =========================================================================
+    // 1. Client-Side Upload First (Isolated try...catch)
+    // =========================================================================
+    let uploadedPhotoUrl: string | null = null;
 
-      const payload =
-        activeTab === 'review'
-          ? {
-              actionType: 'review',
-              toilet_id: selectedToiletId,
-              rating,
-              review_text: reviewText.trim(),
-              is_anonymous: isAnonymous,
-              line_user_id: lineUserId,
-              line_display_name: lineDisplayName,
-              photo_url: uploadedPhotoUrl || undefined,
-              photoDataUrl: uploadedPhotoUrl ? undefined : (photoDataUrl || undefined),
-            }
-          : {
-              actionType: 'report',
-              toilet_id: selectedToiletId,
-              status_type: statusType,
-              status_detail: statusDetail.trim(),
-              is_anonymous: isAnonymous,
-              line_user_id: lineUserId,
-              line_display_name: lineDisplayName,
-              photo_url: uploadedPhotoUrl || undefined,
-              photoDataUrl: uploadedPhotoUrl ? undefined : (photoDataUrl || undefined),
-            };
-
-      let actionSuccess = false;
-
+    if (photoFile) {
       try {
-        const res = await fetch('/api/liff/action', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
-          },
-          body: JSON.stringify(payload),
+        const fileExt = (photoFile.name.split('.').pop() || 'jpg')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+        const cleanExt = fileExt || 'jpg';
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${cleanExt}`;
+        const filePath = `reviews/${fileName}`;
+
+        const mimeType = photoFile.type || (cleanExt === 'png' ? 'image/png' : 'image/jpeg');
+
+        const { error: upErr } = await supabase.storage
+          .from('toilet-photos')
+          .upload(filePath, photoFile, {
+            contentType: mimeType,
+            upsert: false,
+          });
+
+        if (upErr) {
+          console.error('[Storage Upload Error Details]:', upErr);
+          const uploadMsg = upErr.message || JSON.stringify(upErr);
+          setFeedback({
+            type: 'error',
+            message: `[อัปโหลดรูปภาพไม่สำเร็จ]: ${uploadMsg}`,
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { data: pubData } = supabase.storage
+          .from('toilet-photos')
+          .getPublicUrl(filePath);
+
+        uploadedPhotoUrl = pubData.publicUrl;
+        console.log('[Storage Upload Success]:', uploadedPhotoUrl);
+      } catch (storageEx: unknown) {
+        console.error('[Storage Upload Exception]:', storageEx);
+        const errObj = storageEx as { message?: string };
+        const storageMsg = errObj?.message || String(storageEx);
+        setFeedback({
+          type: 'error',
+          message: `[อัปโหลดรูปภาพไม่สำเร็จ]: ${storageMsg}`,
         });
-
-        if (res.ok) {
-          actionSuccess = true;
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          console.warn('API returned non-200, attempting client-side fallback:', errData);
-        }
-      } catch (fetchErr) {
-        console.warn('API fetch issue, attempting client-side fallback:', fetchErr);
+        setIsSubmitting(false);
+        return;
       }
+    }
 
-      // Fallback: Direct client-side insert if API route encountered a transient issue
-      if (!actionSuccess && supabase) {
-        if (activeTab === 'review') {
-          const reviewId = `REV-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const { error: directErr } = await supabase.from('reviews').insert([
-            {
-              review_id: reviewId,
-              toilet_id: selectedToiletId,
-              user_id: 1,
-              line_user_id: lineUserId || 'ANON_LIFF_USER',
-              line_display_name: lineDisplayName || 'ผู้ใช้งาน LINE',
-              is_anonymous: isAnonymous,
-              rating,
-              review_text: reviewText.trim() || 'สะอาด ใช้งานได้ดี',
-              image_url: uploadedPhotoUrl || null,
-              photo_urls: uploadedPhotoUrl ? [uploadedPhotoUrl] : [],
-            },
-          ]);
-          if (!directErr) {
-            actionSuccess = true;
-          } else {
-            throw directErr;
-          }
-        } else {
-          const { error: directErr } = await supabase.from('reports').insert([
-            {
-              toilet_id: selectedToiletId,
-              user_id: 1,
-              line_user_id: lineUserId || 'ANON_LIFF_USER',
-              line_display_name: lineDisplayName || 'ผู้ใช้งาน LINE',
-              is_anonymous: isAnonymous,
-              status_type: statusType,
-              status_detail: statusDetail.trim(),
-              photo_url: uploadedPhotoUrl || null,
-              resolution_status: 'pending',
-            },
-          ]);
-          if (!directErr) {
-            actionSuccess = true;
-          } else {
-            throw directErr;
+    // =========================================================================
+    // 2. Database Insert (Isolated try...catch)
+    // =========================================================================
+    try {
+      if (activeTab === 'review') {
+        const reviewId = `REV-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const reviewPayload = {
+          review_id: reviewId,
+          toilet_id: selectedToiletId,
+          user_id: 1,
+          line_user_id: lineUserId,
+          line_display_name: lineDisplayName,
+          is_anonymous: isAnonymous,
+          rating,
+          review_text: reviewText.trim() || 'สะอาด ใช้งานได้ดี',
+          image_url: uploadedPhotoUrl || null,
+          photo_urls: uploadedPhotoUrl ? [uploadedPhotoUrl] : [],
+        };
+
+        const { error: revErr } = await supabase
+          .from('reviews')
+          .insert([reviewPayload]);
+
+        if (revErr) {
+          console.error('[Database Insert Error (reviews)]:', revErr);
+          const revMsg = revErr.message || revErr.details || revErr.hint || JSON.stringify(revErr);
+          throw new Error(revMsg);
+        }
+
+        // Also add to toilet_photos table for gallery display
+        if (uploadedPhotoUrl) {
+          try {
+            await supabase.from('toilet_photos').insert([
+              {
+                toilet_id: selectedToiletId,
+                user_id: 1,
+                photo_url: uploadedPhotoUrl,
+                caption: 'รูปจากรีวิวผู้ใช้',
+                is_cover: false,
+              },
+            ]);
+          } catch (pErr) {
+            console.warn('[Gallery Insert Warning]:', pErr);
           }
         }
-      }
+      } else {
+        const reportPayload = {
+          toilet_id: selectedToiletId,
+          user_id: 1,
+          line_user_id: lineUserId,
+          line_display_name: lineDisplayName,
+          is_anonymous: isAnonymous,
+          status_type: statusType,
+          status_detail: statusDetail.trim(),
+          photo_url: uploadedPhotoUrl || null,
+          resolution_status: 'pending',
+        };
 
-      if (!actionSuccess) {
-        throw new Error('ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+        const { error: repErr } = await supabase
+          .from('reports')
+          .insert([reportPayload]);
+
+        if (repErr) {
+          console.error('[Database Insert Error (reports)]:', repErr);
+          const repMsg = repErr.message || repErr.details || repErr.hint || JSON.stringify(repErr);
+          throw new Error(repMsg);
+        }
       }
 
       setFeedback({
@@ -397,14 +392,20 @@ export default function LiffReportAndReviewPage() {
       });
       setReviewText('');
       setStatusDetail('');
-      setPhotoDataUrl('');
       setPhotoFile(null);
       setPhotoName('');
       setIsAnonymous(false);
-    } catch (err: unknown) {
+    } catch (dbEx: unknown) {
+      console.error('[Database Insert Exception]:', dbEx);
+      const postgrestErr = dbEx as { message?: string; details?: string; hint?: string };
+      const explicitMsg =
+        postgrestErr?.message ||
+        postgrestErr?.details ||
+        (dbEx instanceof Error ? dbEx.message : String(dbEx));
+
       setFeedback({
         type: 'error',
-        message: err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการส่งข้อมูล',
+        message: `[บันทึกข้อมูลไม่สำเร็จ]: ${explicitMsg}`,
       });
     } finally {
       setIsSubmitting(false);
@@ -801,7 +802,7 @@ export default function LiffReportAndReviewPage() {
           }}
         >
           {isSubmitting
-            ? 'กำลังตรวจสอบสิทธิ์และบันทึกข้อมูล...'
+            ? 'กำลังส่งข้อมูล...'
             : activeTab === 'review'
             ? 'ส่งรีวิวห้องน้ำ'
             : 'ส่งแจ้งปัญหาห้องน้ำ'}
