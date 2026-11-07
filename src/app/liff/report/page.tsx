@@ -151,7 +151,7 @@ export default function LiffReportAndReviewPage() {
 
   // Shared photo state
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoDataUrl, setPhotoDataUrl] = useState<string>('');
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>('');
   const [photoName, setPhotoName] = useState<string>('');
 
   // Submission state
@@ -206,10 +206,23 @@ export default function LiffReportAndReviewPage() {
     return buildings.find((b) => Number(b.building_id) === Number(bid))?.building_name || '';
   };
 
+  // Clean up object URL when component unmounts or before preview changes
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+      }
+    };
+  }, [photoPreviewUrl]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+      }
       setPhotoFile(null);
+      setPhotoPreviewUrl('');
       setPhotoName('');
       return;
     }
@@ -218,8 +231,22 @@ export default function LiffReportAndReviewPage() {
       e.target.value = '';
       return;
     }
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
     setPhotoFile(file);
+    setPhotoPreviewUrl(objectUrl);
     setPhotoName(file.name);
+  };
+
+  const clearSelectedPhoto = () => {
+    if (photoPreviewUrl) {
+      URL.revokeObjectURL(photoPreviewUrl);
+    }
+    setPhotoFile(null);
+    setPhotoPreviewUrl('');
+    setPhotoName('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -392,6 +419,10 @@ export default function LiffReportAndReviewPage() {
       });
       setReviewText('');
       setStatusDetail('');
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+      }
+      setPhotoPreviewUrl('');
       setPhotoFile(null);
       setPhotoName('');
       setIsAnonymous(false);
@@ -726,21 +757,65 @@ export default function LiffReportAndReviewPage() {
           </>
         )}
 
-        {/* 4. Optional Photo Upload (Magic-byte validated on server, pending admin approval) */}
+        {/* 4. Optional Photo Upload */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <label style={{ fontSize: '13px', fontWeight: 700 }}>
-            4. แนบรูปถ่ายประกอบ (ถ้ามี — JPEG/PNG/WebP ไม่เกิน 5 MB)
+            4. แนบรูปถ่ายประกอบ (ถ้ามี — รองรับรูปภาพทุกประเภท ไม่เกิน 10 MB)
           </label>
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*"
             onChange={handleFileChange}
             style={{ fontSize: '12px', color: subText }}
           />
-          {photoName && (
-            <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 600 }}>
-              เลือกรูปภาพแล้ว: {photoName}
-            </span>
+
+          {photoPreviewUrl && (
+            <div
+              style={{
+                marginTop: '8px',
+                padding: '10px',
+                borderRadius: '12px',
+                backgroundColor: inputBg,
+                border: `1px solid ${cardBorder}`,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoPreviewUrl}
+                alt="พรีวิวรูปภาพ"
+                style={{
+                  maxHeight: '180px',
+                  maxWidth: '100%',
+                  borderRadius: '8px',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', color: '#16A34A', fontWeight: 600 }}>
+                  ✓ เลือกรูปภาพแล้ว: {photoName}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSelectedPhoto}
+                  style={{
+                    backgroundColor: '#FEE2E2',
+                    color: '#DC2626',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕ ยกเลิกรูปนี้
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
