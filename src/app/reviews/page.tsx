@@ -150,11 +150,31 @@ export default function ReviewsPage() {
                         </div>
                       </td>
                       <td style={{ fontSize: '13px', color: '#334155' }}>
-                        {rev.review_text ? (
-                          <span>&ldquo;{rev.review_text}&rdquo;</span>
-                        ) : (
-                          <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>ไม่ได้ระบุข้อความ</span>
-                        )}
+                        <div>
+                          {rev.review_text ? (
+                            <span>&ldquo;{rev.review_text}&rdquo;</span>
+                          ) : (
+                            <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>ไม่ได้ระบุข้อความ</span>
+                          )}
+                          {(rev.image_url || rev.photo_urls?.[0]) && (
+                            <div style={{ marginTop: '6px' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={rev.image_url || rev.photo_urls?.[0] || ''}
+                                alt="รูปภาพประกอบรีวิว"
+                                style={{
+                                  maxHeight: '60px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #CBD5E1',
+                                  objectFit: 'cover',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={() => window.open(rev.image_url || rev.photo_urls?.[0] || '', '_blank')}
+                                title="คลิกเพื่อดูรูปภาพขนาดเต็ม"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <button

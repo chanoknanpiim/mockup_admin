@@ -196,8 +196,8 @@ async function validateAndUploadPhotoDataUrl(
     };
   }
 
-  // Generate random filename under `pending/` prefix
-  const randomFileName = `pending/${crypto.randomUUID()}.${detected.ext}`;
+  // Generate random filename under `reviews/` prefix
+  const randomFileName = `reviews/${crypto.randomUUID()}.${detected.ext}`;
   const { error: uploadErr } = await supabase.storage
     .from('toilet-photos')
     .upload(randomFileName, buffer, {
@@ -418,9 +418,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const photoResult = await validateAndUploadPhotoDataUrl(supabase, body.photoDataUrl as string);
-    if (photoResult.error) {
-      return NextResponse.json({ error: photoResult.error }, { status: 400 });
+    let finalPhotoUrl = (typeof body.photo_url === 'string' && body.photo_url) ? body.photo_url : undefined;
+    if (!finalPhotoUrl && body.photoDataUrl) {
+      const photoResult = await validateAndUploadPhotoDataUrl(supabase, body.photoDataUrl as string);
+      if (photoResult.error) {
+        return NextResponse.json({ error: photoResult.error }, { status: 400 });
+      }
+      finalPhotoUrl = photoResult.url;
     }
 
     const reviewId = `REV-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
@@ -436,8 +440,8 @@ export async function POST(req: NextRequest) {
           is_anonymous: isAnonymous,
           rating,
           review_text: reviewText || 'สะอาด ใช้งานได้ดี',
-          image_url: null,
-          photo_urls: photoResult.url ? [photoResult.url] : [],
+          image_url: finalPhotoUrl || null,
+          photo_urls: finalPhotoUrl ? [finalPhotoUrl] : [],
         },
       ])
       .select()
@@ -447,15 +451,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: revErr.message }, { status: 400 });
     }
 
-    // Store uploaded photo in `toilet_photos` with `[PENDING_APPROVAL]` caption
-    if (photoResult.url) {
+    // Save uploaded photo in `toilet_photos` immediately
+    if (finalPhotoUrl) {
       try {
         await supabase.from('toilet_photos').insert([
           {
             toilet_id: toiletId,
             user_id: dbUserId,
-            photo_url: photoResult.url,
-            caption: '[PENDING_APPROVAL] รูปจากรีวิวผู้ใช้ รอแอดมินอนุมัติ',
+            photo_url: finalPhotoUrl,
+            caption: 'รูปจากรีวิวผู้ใช้',
             is_cover: false,
           },
         ]);
@@ -495,9 +499,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const photoResult = await validateAndUploadPhotoDataUrl(supabase, body.photoDataUrl as string);
-    if (photoResult.error) {
-      return NextResponse.json({ error: photoResult.error }, { status: 400 });
+    let finalPhotoUrl = (typeof body.photo_url === 'string' && body.photo_url) ? body.photo_url : undefined;
+    if (!finalPhotoUrl && body.photoDataUrl) {
+      const photoResult = await validateAndUploadPhotoDataUrl(supabase, body.photoDataUrl as string);
+      if (photoResult.error) {
+        return NextResponse.json({ error: photoResult.error }, { status: 400 });
+      }
+      finalPhotoUrl = photoResult.url;
     }
 
     const { data: insertedReport, error: repErr } = await supabase
@@ -511,7 +519,7 @@ export async function POST(req: NextRequest) {
           is_anonymous: isAnonymous,
           status_type: safeStatusType,
           status_detail: statusDetail,
-          photo_url: photoResult.url || null,
+          photo_url: finalPhotoUrl || null,
           resolution_status: 'pending',
         },
       ])

@@ -75,6 +75,8 @@ export interface ReviewItem {
   user_id?: number | null;
   rating: number;
   review_text?: string | null;
+  image_url?: string | null;
+  photo_urls?: string[] | null;
   line_user_id?: string | null;
   line_display_name?: string | null;
   is_anonymous?: boolean | null;

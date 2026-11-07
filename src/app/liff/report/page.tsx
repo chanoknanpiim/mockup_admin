@@ -150,6 +150,7 @@ export default function LiffReportAndReviewPage() {
   const [statusDetail, setStatusDetail] = useState<string>('');
 
   // Shared photo state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string>('');
   const [photoName, setPhotoName] = useState<string>('');
 
@@ -208,6 +209,7 @@ export default function LiffReportAndReviewPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
+      setPhotoFile(null);
       setPhotoDataUrl('');
       setPhotoName('');
       return;
@@ -217,6 +219,7 @@ export default function LiffReportAndReviewPage() {
       e.target.value = '';
       return;
     }
+    setPhotoFile(file);
     setPhotoName(file.name);
     const reader = new FileReader();
     reader.onload = () => {
@@ -265,6 +268,30 @@ export default function LiffReportAndReviewPage() {
 
     setIsSubmitting(true);
     try {
+      // 1. Upload photo directly to Supabase Storage if file is present
+      let uploadedPhotoUrl: string | null = null;
+      if (photoFile && supabase) {
+        try {
+          const fileExt = photoFile.name.split('.').pop() || 'jpg';
+          const filePath = `reviews/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+          const { error: upErr } = await supabase.storage
+            .from('toilet-photos')
+            .upload(filePath, photoFile, {
+              contentType: photoFile.type || 'image/jpeg',
+              upsert: false,
+            });
+
+          if (!upErr) {
+            const { data: pubData } = supabase.storage.from('toilet-photos').getPublicUrl(filePath);
+            uploadedPhotoUrl = pubData.publicUrl;
+          } else {
+            console.warn('Direct client upload warning, will fallback to dataUrl in API:', upErr.message);
+          }
+        } catch (upEx) {
+          console.warn('Direct storage upload exception:', upEx);
+        }
+      }
+
       const payload =
         activeTab === 'review'
           ? {
@@ -275,7 +302,8 @@ export default function LiffReportAndReviewPage() {
               is_anonymous: isAnonymous,
               line_user_id: lineUserId,
               line_display_name: lineDisplayName,
-              photoDataUrl: photoDataUrl || undefined,
+              photo_url: uploadedPhotoUrl || undefined,
+              photoDataUrl: uploadedPhotoUrl ? undefined : (photoDataUrl || undefined),
             }
           : {
               actionType: 'report',
@@ -285,7 +313,8 @@ export default function LiffReportAndReviewPage() {
               is_anonymous: isAnonymous,
               line_user_id: lineUserId,
               line_display_name: lineDisplayName,
-              photoDataUrl: photoDataUrl || undefined,
+              photo_url: uploadedPhotoUrl || undefined,
+              photoDataUrl: uploadedPhotoUrl ? undefined : (photoDataUrl || undefined),
             };
 
       let actionSuccess = false;
@@ -324,8 +353,8 @@ export default function LiffReportAndReviewPage() {
               is_anonymous: isAnonymous,
               rating,
               review_text: reviewText.trim() || 'สะอาด ใช้งานได้ดี',
-              image_url: null,
-              photo_urls: [],
+              image_url: uploadedPhotoUrl || null,
+              photo_urls: uploadedPhotoUrl ? [uploadedPhotoUrl] : [],
             },
           ]);
           if (!directErr) {
@@ -343,6 +372,7 @@ export default function LiffReportAndReviewPage() {
               is_anonymous: isAnonymous,
               status_type: statusType,
               status_detail: statusDetail.trim(),
+              photo_url: uploadedPhotoUrl || null,
               resolution_status: 'pending',
             },
           ]);
@@ -362,12 +392,13 @@ export default function LiffReportAndReviewPage() {
         type: 'success',
         message:
           activeTab === 'review'
-            ? 'บันทึกรีวิวและคะแนนความสะอาดเรียบร้อยแล้ว! (หากแนบรูปภาพ รูปจะแสดงเมื่อแอดมินอนุมัติ)'
-            : 'ส่งแจ้งปัญหาห้องน้ำเรียบร้อยแล้ว! แอดมินจะดำเนินการตรวจสอบโดยเร็วที่สุด',
+            ? 'บันทึกรีวิวและคะแนนความสะอาดเรียบร้อยแล้ว!'
+            : 'ส่งแจ้งปัญหาห้องน้ำเรียบร้อยแล้ว! ข้อมูลถูกบันทึกเข้าระบบเรียบร้อยแล้ว',
       });
       setReviewText('');
       setStatusDetail('');
       setPhotoDataUrl('');
+      setPhotoFile(null);
       setPhotoName('');
       setIsAnonymous(false);
     } catch (err: unknown) {
@@ -707,7 +738,7 @@ export default function LiffReportAndReviewPage() {
           />
           {photoName && (
             <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 600 }}>
-              เลือกรูปภาพแล้ว: {photoName} (รูปจะอยู่ในสถานะรอแอดมินอนุมัติก่อนแสดงสาธารณะ)
+              เลือกรูปภาพแล้ว: {photoName}
             </span>
           )}
         </div>
